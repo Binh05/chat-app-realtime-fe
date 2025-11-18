@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-function Messages() {
+function FriendList() {
   return (
     <View
       style={{
@@ -15,4 +15,4 @@ function Messages() {
   );
 }
 
-export default Messages;
+export default FriendList;
