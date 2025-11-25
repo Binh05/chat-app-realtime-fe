@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
   StyleSheet,
@@ -18,6 +18,12 @@ type Props = {
 };
 
 export default function MessagePage({ navigation }: Props) {
+  const notificationsData = [
+    { id: "1", text: "Bạn có tin nhắn mới từ John" },
+    { id: "2", text: "Đơn hàng của bạn đã được gửi" },
+    { id: "3", text: "Có sự kiện mới hôm nay" },
+  ];
+
   const onlineUsers = [
     { id: 1, name: "Christopher", img: "https://i.pravatar.cc/150?img=12" },
     { id: 2, name: "Reese", img: "https://i.pravatar.cc/150?img=32" },
@@ -53,16 +59,19 @@ export default function MessagePage({ navigation }: Props) {
     },
   ];
 
+  const [menuVisible, setMenuVisible] = useState(false);
+
   return (
     <View style={styles.container}>
-
       {/* Header */}
       <View style={styles.headerRow}>
         <Image
           source={{ uri: "https://i.pravatar.cc/100?img=5" }}
           style={styles.headerAvatar}
         />
-        <Ionicons name="notifications-outline" size={26} color="#333" />
+        <TouchableOpacity>
+          <Ionicons name="notifications-outline" size={26} color="#333" />
+        </TouchableOpacity>
       </View>
 
       {/* ================= ONLINE USERS ================= */}
@@ -91,7 +100,10 @@ export default function MessagePage({ navigation }: Props) {
         data={messages}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.messageContainer} onPress={() => navigation.navigate("Detail")}>
+          <TouchableOpacity
+            style={styles.messageContainer}
+            onPress={() => navigation.navigate("Detail")}
+          >
             <Image source={{ uri: item.img }} style={styles.messageAvatar} />
             {/* Badge tin nhắn */}
             {item.badge > 0 && (
@@ -101,7 +113,7 @@ export default function MessagePage({ navigation }: Props) {
             )}
             <View style={styles.messageContent}>
               <View style={styles.rowBetween}>
-                <Text style={styles.name}>{item.name}</Text>  
+                <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.time}>{item.time}</Text>
               </View>
 
