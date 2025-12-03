@@ -26,7 +26,7 @@ export default function LoginScreen({ navigation }: any) {
 
     console.log('Đăng nhập với:', username, password);
 
-    navigation.replace('Home');
+    navigation.replace('Message');
   };
 
   return (

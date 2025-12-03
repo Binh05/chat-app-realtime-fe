@@ -1,67 +1,83 @@
 import React, { useState } from "react";
-import { StatusBar } from "expo-status-bar";
 import {
+  StatusBar,
   StyleSheet,
   Text,
   View,
   Image,
-  FlatList,
   TouchableOpacity,
   Switch,
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Provider, Menu } from "react-native-paper";
+import { Menu } from "react-native-paper";
 
-const icons = ["home", "search", "call", "notifications"] as const;
+const icons: { name: keyof typeof Ionicons.glyphMap; label: string }[] = [
+  { name: "call-outline", label: "Call" },
+  { name: "videocam-outline", label: "Video" },
+  { name: "notifications-outline", label: "Mute" },
+  { name: "person-add-outline", label: "Add" },
+];
 
 export default function ChatDesc({ navigation }: any) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
-    <Provider>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backIcon}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back-outline" size={28} color="#333" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Image
-              source={{ uri: "https://i.pravatar.cc/150?img=47" }}
-              style={styles.headerAvatar}
-              resizeMode="cover"
-            />
-            <Text style={styles.headerName}>Your Name</Text>
-          </View>
-        </View>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back-outline" size={28} color="#333" />
+        </TouchableOpacity>
 
-        {/* Icon Row */}
-        <View style={styles.iconRow}>
-          {icons.map((icon, index) => (
-            <TouchableOpacity key={index} style={styles.iconBox}>
-              <Ionicons name={icon} size={30} color="#555" />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Notifications Switch */}
-        <View style={styles.row}>
-          <Ionicons name="notifications-outline" size={24} color="#555" />
-          <Text style={styles.label}>Notifications</Text>
-          <Switch
-            value={notificationsEnabled}
-            onValueChange={() =>
-              setNotificationsEnabled(!notificationsEnabled)
-            }
+        <View style={styles.headerInfo}>
+          <Image
+            source={{ uri: "https://i.pravatar.cc/150?img=47" }}
+            style={styles.avatar}
           />
+          <Text style={styles.name}>Your Name</Text>
         </View>
 
-        {/* Dropdown Menu */}
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <Ionicons name="ellipsis-vertical" size={26} color="#333" />
+        </TouchableOpacity>
+
+        {/* Menu 3-dots */}
+        <Menu
+          visible={menuVisible}
+          onDismiss={() => setMenuVisible(false)}
+          anchor={<View />} // anchor tách riêng để tránh lỗi click
+        >
+          <Menu.Item onPress={() => {}} title="Block" />
+          <Menu.Item onPress={() => {}} title="Report" />
+        </Menu>
+      </View>
+
+      {/* Icon Row */}
+      <View style={styles.iconRow}>
+        {icons.map((icon, index) => (
+          <TouchableOpacity key={index} style={styles.iconBox}>
+            <Ionicons name={icon.name} size={28} color="#444" />
+            <Text style={styles.iconLabel}>{icon.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Notifications */}
+      <View style={styles.row}>
+        <View style={styles.rowLeft}>
+          <Ionicons name="notifications-outline" size={24} color="#555" />
+          <Text style={styles.rowText}>Notifications</Text>
+        </View>
+        <Switch
+          value={notificationsEnabled}
+          onValueChange={() => setNotificationsEnabled(!notificationsEnabled)}
+        />
+      </View>
+
+      {/* File & Media dropdown */}
+      <View style={styles.dropdownContainer}>
         <Menu
           visible={menuVisible}
           onDismiss={() => setMenuVisible(false)}
@@ -70,65 +86,87 @@ export default function ChatDesc({ navigation }: any) {
               onPress={() => setMenuVisible(true)}
               style={styles.dropdown}
             >
-              <Text style={{ fontSize: 16 }}>File and media</Text>
-              <Ionicons name="chevron-down" size={20} />
+              <Text style={styles.dropdownText}>File & Media</Text>
+              <Ionicons name="chevron-down" size={20} color="#444" />
             </TouchableOpacity>
           }
         >
-          <Menu.Item onPress={() => {}} title="Option 1" />
-          <Menu.Item onPress={() => {}} title="Option 2" />
+          <Menu.Item onPress={() => {}} title="Images" />
+          <Menu.Item onPress={() => {}} title="Videos" />
+          <Menu.Item onPress={() => {}} title="Files" />
         </Menu>
-
-        <StatusBar style="auto" />
       </View>
-    </Provider>
+
+      <StatusBar barStyle="dark-content" />
+    </View>
   );
 }
 
 const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 16 },
+  container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 20 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingTop: 50,
     paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    justifyContent: "space-between",
   },
-  backIcon: { marginRight: 16 },
-  headerContent: { flex: 1, alignItems: "center" },
-  headerAvatar: { width: 120, height: 120, borderRadius: 60, marginBottom: 8 },
-  headerName: { fontSize: 24, fontWeight: "bold", color: "#333" },
+  headerInfo: { alignItems: "center", flex: 1 },
+  avatar: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: "#ddd",
+  },
+  name: { fontSize: 22, fontWeight: "600", color: "#333" },
+
   iconRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: 16,
+    marginTop: 20,
   },
   iconBox: {
-    width: (width - 64) / 4, // responsive: 4 icons, margin included
-    paddingVertical: 12,
-    backgroundColor: "#eee",
-    borderRadius: 8,
+    width: (width - 80) / 4,
+    backgroundColor: "#f2f2f2",
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
   },
+  iconLabel: { marginTop: 6, fontSize: 14, color: "#444" },
+
   row: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
-    paddingHorizontal: 8,
+    alignItems: "center",
+    marginTop: 30,
+    paddingVertical: 12,
   },
-  label: { flex: 1, marginLeft: 8, fontSize: 16 },
-  dropdown: {
+  rowLeft: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: 12,
-    backgroundColor: "#eee",
-    borderRadius: 8,
-    marginBottom: 16,
   },
+  rowText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#333",
+  },
+
+  dropdownContainer: { marginTop: 20 },
+  dropdown: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 14,
+    backgroundColor: "#f2f2f2",
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  dropdownText: { fontSize: 16, color: "#333" },
 });
