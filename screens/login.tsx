@@ -13,18 +13,18 @@ import {
 } from 'react-native';
 
 export default function LoginScreen({ navigation }: any) {
-  const [phone, setPhone] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
   const handleLogin = () => {
-    if (!phone || !password) {
-      Alert.alert('Thông báo', 'Vui lòng nhập số điện thoại và mật khẩu');
+    if (!username || !password) {
+      Alert.alert('Thông báo', 'Vui lòng nhập username và mật khẩu');
       return;
     }
 
-    console.log('Đăng nhập với:', phone, password);
+    console.log('Đăng nhập với:', username, password);
 
     navigation.replace('Home');
   };
@@ -55,8 +55,8 @@ export default function LoginScreen({ navigation }: any) {
               placeholder="SĐT"
               placeholderTextColor="#626262"
               keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
+              value={username}
+              onChangeText={setUsername}
               onFocus={() => setFocusedInput('phone')}
               onBlur={() => setFocusedInput(null)}
             />
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: 'bold',
-    color: '#1F41BB', // Màu xanh đậm chủ đạo
+    color: '#1F41BB',
     marginBottom: 10,
   },
   subtitle: {
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   input: {
-    backgroundColor: '#F1F4FF', // Màu nền input xanh nhạt
+    backgroundColor: '#F1F4FF', 
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 10,
