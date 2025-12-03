@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useState } from 'react'; // Thêm useState
 import {
   FlatList,
   Image,
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import TaskBar from '../components/TaskBar'; // Thêm import TaskBar
 
 const POSTS = [
   {
@@ -34,7 +34,25 @@ const POSTS = [
       'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=100',
     ]
   },
-
+  // Thêm thêm posts nếu muốn
+  {
+    id: '2',
+    user: {
+      name: 'Alice Johnson',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150',
+      subtitle: 'Tech News',
+      isFollowing: true,
+    },
+    content: "React Native 0.74 released with new features and improvements!",
+    image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=800',
+    likes: 850,
+    likedBy: 'Bob',
+    responses: 45,
+    responseAvatars: [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100',
+    ]
+  },
 ];
 
 const PostItem = ({ item }: { item: any }) => (
@@ -50,7 +68,9 @@ const PostItem = ({ item }: { item: any }) => (
       </View>
 
       <TouchableOpacity style={styles.followButton}>
-        <Text style={styles.followText}>Follow</Text>
+        <Text style={styles.followText}>
+          {item.user.isFollowing ? 'Following' : 'Follow'}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.menuButton}>
@@ -112,39 +132,46 @@ const PostItem = ({ item }: { item: any }) => (
 );
 
 export default function HomeScreen() {
+  const [currentTab, setCurrentTab] = useState('home'); // State cho TaskBar
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <View style={{ flex: 1 }}>
+      {/* Phần nội dung HomeScreen */}
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
 
-      {/* HEADER TỔNG (Sticky) */}
-      <View style={styles.header}>
-        <TouchableOpacity>
-          <Ionicons name="search-outline" size={26} color="#000" />
-        </TouchableOpacity>
-        
-        <Text style={styles.headerTitle}>Feeds</Text>
-        
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerIcon}>
-            <Ionicons name="filter-outline" size={24} color="#000" />
+        {/* HEADER TỔNG (Sticky) */}
+        <View style={styles.header}>
+          <TouchableOpacity>
+            <Ionicons name="search-outline" size={26} color="#000" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIcon}>
-            <Ionicons name="notifications-outline" size={24} color="#000" />
-            {/* Chấm đỏ thông báo */}
-            <View style={styles.notificationBadge} />
-          </TouchableOpacity>
+          
+          <Text style={styles.headerTitle}>Feeds</Text>
+          
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.headerIcon}>
+              <Ionicons name="filter-outline" size={24} color="#000" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerIcon}>
+              <Ionicons name="notifications-outline" size={24} color="#000" />
+              <View style={styles.notificationBadge} />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* DANH SÁCH BÀI VIẾT */}
-      <FlatList
-        data={POSTS}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <PostItem item={item} />}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
-    </SafeAreaView>
+        {/* DANH SÁCH BÀI VIẾT */}
+        <FlatList
+          data={POSTS}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <PostItem item={item} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+      </SafeAreaView>
+
+      {/* TaskBar ở dưới cùng */}
+      <TaskBar current={currentTab} onChange={setCurrentTab} />
+    </View>
   );
 }
 
@@ -152,7 +179,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0, 
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0,
+    paddingBottom: 70, // Thêm padding cho TaskBar
   },
   
   header: {
