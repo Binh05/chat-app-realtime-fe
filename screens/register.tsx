@@ -13,17 +13,16 @@ import {
 } from 'react-native';
 
 export default function RegisterScreen({ navigation }: any) {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // State quản lý focus để đổi màu viền
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
   const handleRegister = () => {
     // 1. Kiểm tra dữ liệu
-    if (!email || !phone || !password || !confirmPassword) {
+    if (!username || !phone || !password || !confirmPassword) {
       Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin');
       return;
     }
@@ -34,7 +33,7 @@ export default function RegisterScreen({ navigation }: any) {
     }
 
     // 2. Xử lý đăng ký thành công (Giả lập)
-    console.log('Register:', email, phone, password);
+    console.log('Register:', username, phone, password);
     
     Alert.alert('Thành công', 'Tạo tài khoản thành công!', [
       { 
@@ -63,18 +62,18 @@ export default function RegisterScreen({ navigation }: any) {
           {/* --- FORM --- */}
           <View style={styles.formContainer}>
             
-            {/* Input Email */}
+            {/* Input username */}
             <TextInput
               style={[
                 styles.input, 
-                focusedInput === 'email' && styles.inputFocused
+                focusedInput === 'username' && styles.inputFocused
               ]}
-              placeholder="Email"
+              placeholder="Username"
               placeholderTextColor="#626262"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-              onFocus={() => setFocusedInput('email')}
+              keyboardType="default"
+              value={username}
+              onChangeText={setUsername}
+              onFocus={() => setFocusedInput('username')}
               onBlur={() => setFocusedInput(null)}
             />
 
