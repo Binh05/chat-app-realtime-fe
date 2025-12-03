@@ -40,6 +40,30 @@ export default function MessageDetailPage({ navigation }: any) {
     },
   ];
 
+  const [showEmoji, setShowEmoji] = React.useState(false);
+  const [text, setText] = React.useState("");
+
+  const emojis = [
+    "😀",
+    "😁",
+    "😂",
+    "🤣",
+    "😊",
+    "😍",
+    "😘",
+    "😎",
+    "🤔",
+    "😢",
+    "😭",
+    "😡",
+    "👍",
+    "👎",
+    "🙏",
+    "💖",
+    "🔥",
+    "🎉",
+  ];
+
   return (
     <View style={styles.container}>
       {/* ================= HEADER ================= */}
@@ -65,7 +89,12 @@ export default function MessageDetailPage({ navigation }: any) {
         </View>
 
         <View style={styles.headerIcons}>
-          <Ionicons name="call-outline" size={24} color="#333333ff" />
+          <Ionicons
+            name="call-outline"
+            size={24}
+            color="#333333ff"
+            onPress={() => navigation.navigate("PhoneUI")}
+          />
           <Ionicons
             name="videocam-outline"
             size={26}
@@ -77,7 +106,7 @@ export default function MessageDetailPage({ navigation }: any) {
             size={22}
             color="#333"
             style={{ marginLeft: 20 }}
-            onPress={() => navigation.navigate("ChatDesc")} 
+            onPress={() => navigation.navigate("ChatDesc")}
           />
         </View>
       </View>
@@ -135,14 +164,40 @@ export default function MessageDetailPage({ navigation }: any) {
         )}
       />
 
+      {showEmoji && (
+        <View style={styles.emojiBox}>
+          <FlatList
+            data={emojis}
+            numColumns={8}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.emojiItem}
+                onPress={() => {
+                  setText(text + item);
+                }}
+              >
+                <Text style={{ fontSize: 28 }}>{item}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      )}
+
       {/* ================= INPUT BAR ================= */}
       <View style={styles.inputBar}>
-        <Ionicons name="happy-outline" size={26} color="#999" />
-
+        <Ionicons
+          name="happy-outline"
+          size={26}
+          color="#999"
+          onPress={() => setShowEmoji(!showEmoji)}
+        />
         <TextInput
           placeholder="Write a message..."
           style={styles.input}
           placeholderTextColor="#aaa"
+          value={text} // <-- liên kết state
+          onChangeText={setText} // <-- cập nhật state khi gõ
         />
 
         <Ionicons
@@ -151,7 +206,6 @@ export default function MessageDetailPage({ navigation }: any) {
           color="#999"
           style={{ marginHorizontal: 10 }}
         />
-
         <TouchableOpacity style={styles.sendBtn}>
           <Ionicons name="send" size={22} color="#fff" />
         </TouchableOpacity>
@@ -281,5 +335,19 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  emojiBox: {
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderColor: "#ddd",
+    maxHeight: 250,
+  },
+  emojiItem: {
+    padding: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "12.5%", // 8 emojis trên 1 dòng
   },
 });

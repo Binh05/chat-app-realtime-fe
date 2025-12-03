@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
 
 import NotificationDropdown from "../components/ui/notification";
+import TaskBar from "../components/TaskBar";
 
 type Props = {
   navigation: StackNavigationProp<any>;
@@ -63,9 +64,10 @@ export default function MessagePage({ navigation }: Props) {
 
   const [menuVisible, setMenuVisible] = useState(false);
 
+  const [currentTab, setCurrentTab] = useState("messages");
+
   return (
     <View style={styles.container}>
-      
       {/* Header */}
       <View style={styles.headerRow}>
         <Image
@@ -74,7 +76,6 @@ export default function MessagePage({ navigation }: Props) {
         />
         <NotificationDropdown />
       </View>
-
       {/* ================= ONLINE USERS ================= */}
       <Text style={styles.title}>ONLINE USERS</Text>
       <FlatList
@@ -83,19 +84,22 @@ export default function MessagePage({ navigation }: Props) {
         showsHorizontalScrollIndicator={false}
         style={styles.flatList_1}
         renderItem={({ item }) => (
-          <View style={styles.onlineUser}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.onlineUser}
+            onPress={() => navigation.navigate("Detail", { user: item })}
+          >
             <View>
               <Image source={{ uri: item.img }} style={styles.onlineAvatar} />
               <View style={styles.onlineDot} />
             </View>
             <Text style={styles.onlineName}>{item.name}</Text>
-          </View>
+          </TouchableOpacity>
         )}
       />
 
       {/* ================= CHATS ================= */}
       <Text style={styles.title}>CHATS</Text>
-
       {/* ================= MESSAGE LIST ================= */}
       <FlatList
         data={messages}
@@ -123,6 +127,18 @@ export default function MessagePage({ navigation }: Props) {
           </TouchableOpacity>
         )}
       />
+      <TaskBar
+        current={currentTab}
+        onChange={(key) => {
+          setCurrentTab(key);
+
+          // điều hướng theo key
+          if (key === "home") navigation.navigate("Home");
+          if (key === "messages") navigation.navigate("Message");
+          if (key === "contacts") navigation.navigate("Contacts");
+          if (key === "profile") navigation.navigate("Profile");
+        }}
+      />
       <StatusBar style="auto" />
     </View>
   );
@@ -131,7 +147,6 @@ export default function MessagePage({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     paddingTop: 45,
-    paddingHorizontal: 20,
     backgroundColor: "#fff",
     flex: 1,
   },
@@ -140,6 +155,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 10,
+    paddingHorizontal: 10,
   },
 
   // Header
@@ -148,6 +164,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
+    paddingHorizontal: 20,
   },
 
   headerAvatar: {
@@ -161,6 +178,7 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     marginBottom: 10,
     paddingVertical: 5,
+    paddingHorizontal: 20,
   },
 
   onlineUser: {
@@ -195,6 +213,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginBottom: 25,
     alignItems: "center",
+    paddingHorizontal: 20,
   },
   messageAvatar: {
     width: 65,
@@ -204,7 +223,7 @@ const styles = StyleSheet.create({
 
   badge: {
     position: "absolute",
-    left: 45,
+    left: 70,
     top: 5,
     backgroundColor: "red",
     width: 22,

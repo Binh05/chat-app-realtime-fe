@@ -131,7 +131,7 @@ const PostItem = ({ item }: { item: any }) => (
   </View>
 );
 
-export default function HomeScreen() {
+export default function HomeScreen( { navigation }: any ) {
   const [currentTab, setCurrentTab] = useState('home'); // State cho TaskBar
 
   return (
@@ -170,7 +170,18 @@ export default function HomeScreen() {
       </SafeAreaView>
 
       {/* TaskBar ở dưới cùng */}
-      <TaskBar current={currentTab} onChange={setCurrentTab} />
+      <TaskBar
+              current={currentTab}
+              onChange={(key) => {
+                setCurrentTab(key);
+      
+                // điều hướng theo key
+                if (key === "home") navigation.navigate("Home");
+                if (key === "messages") navigation.navigate("Message");
+                if (key === "contacts") navigation.navigate("Contacts");
+                if (key === "profile") navigation.navigate("Profile");
+              }}
+            />
     </View>
   );
 }
