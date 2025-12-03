@@ -13,6 +13,8 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { StackNavigationProp } from "@react-navigation/stack";
 
+import NotificationDropdown from "../components/ui/notification";
+
 type Props = {
   navigation: StackNavigationProp<any>;
 };
@@ -63,15 +65,14 @@ export default function MessagePage({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
+      
       {/* Header */}
       <View style={styles.headerRow}>
         <Image
           source={{ uri: "https://i.pravatar.cc/100?img=5" }}
           style={styles.headerAvatar}
         />
-        <TouchableOpacity>
-          <Ionicons name="notifications-outline" size={26} color="#333" />
-        </TouchableOpacity>
+        <NotificationDropdown />
       </View>
 
       {/* ================= ONLINE USERS ================= */}
@@ -144,8 +145,8 @@ const styles = StyleSheet.create({
   // Header
   headerRow: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
 
