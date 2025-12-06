@@ -7,7 +7,7 @@ import {
   Image,
   FlatList,
   TouchableOpacity,
-  Button,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -21,12 +21,6 @@ type Props = {
 };
 
 export default function MessagePage({ navigation }: Props) {
-  const notificationsData = [
-    { id: "1", text: "Bạn có tin nhắn mới từ John" },
-    { id: "2", text: "Đơn hàng của bạn đã được gửi" },
-    { id: "3", text: "Có sự kiện mới hôm nay" },
-  ];
-
   const onlineUsers = [
     { id: 1, name: "Christopher", img: "https://i.pravatar.cc/150?img=12" },
     { id: 2, name: "Reese", img: "https://i.pravatar.cc/150?img=32" },
@@ -62,9 +56,16 @@ export default function MessagePage({ navigation }: Props) {
     },
   ];
 
-  const [menuVisible, setMenuVisible] = useState(false);
-
   const [currentTab, setCurrentTab] = useState("messages");
+  const [createGroupVisible, setCreateGroupVisible] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  const [groupName, setGroupName] = useState("");
+  const [groups, setGroups] = useState<any[]>([]);
+
+  const chatList = [
+    ...groups.map((g) => ({ type: "group", ...g })),
+    ...messages.map((m) => ({ type: "private", ...m })),
+  ];
 
   return (
     <View style={styles.container}>
@@ -76,7 +77,15 @@ export default function MessagePage({ navigation }: Props) {
         />
         <NotificationDropdown />
       </View>
-      {/* ================= ONLINE USERS ================= */}
+
+      <TouchableOpacity
+        style={styles.createGroupButton}
+        onPress={() => setCreateGroupVisible(true)}
+      >
+        <Ionicons name="add-circle-outline" size={28} color="#333" />
+      </TouchableOpacity>
+
+      {/* ========== ONLINE USERS ========== */}
       <Text style={styles.title}>ONLINE USERS</Text>
       <FlatList
         data={onlineUsers}
@@ -98,41 +107,176 @@ export default function MessagePage({ navigation }: Props) {
         )}
       />
 
-      {/* ================= CHATS ================= */}
+      {/* ========== CHATS ========== */}
       <Text style={styles.title}>CHATS</Text>
-      {/* ================= MESSAGE LIST ================= */}
-      <FlatList
-        data={messages}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.messageContainer}
-            onPress={() => navigation.navigate("Detail")}
-          >
-            <Image source={{ uri: item.img }} style={styles.messageAvatar} />
-            {/* Badge tin nhắn */}
-            {item.badge > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{item.badge}</Text>
-              </View>
-            )}
-            <View style={styles.messageContent}>
-              <View style={styles.rowBetween}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.time}>{item.time}</Text>
-              </View>
 
-              <Text style={styles.messageText}>{item.message}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
+      <FlatList
+        data={chatList}
+        keyExtractor={(item) => item.id.toString()}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => {
+          if (item.type === "group") {
+            return (
+              <TouchableOpacity
+                style={styles.messageContainer}
+                onPress={() => navigation.navigate("GroupChat", item)}
+              >
+                <View style={styles.groupAvatarWrapper}>
+                  <Image
+                    source={{ uri: item.members[0].img }}
+                    style={styles.groupAvatar}
+                  />
+                  {item.members[1] && (
+                    <Image
+                      source={{ uri: item.members[1].img }}
+                      style={[styles.groupAvatar, styles.groupAvatar2]}
+                    />
+                  )}
+                </View>
+
+                <View style={styles.messageContent}>
+                  <View style={styles.rowBetween}>
+                    <Text style={styles.name}>{item.name}</Text>
+                    <Text style={styles.time}>{item.time}</Text>
+                  </View>
+
+                  <Text style={styles.messageText}>{item.lastMessage}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }
+
+          // ===== PRIVATE CHAT =====
+          return (
+            <TouchableOpacity
+              style={styles.messageContainer}
+              onPress={() => navigation.navigate("Detail")}
+            >
+              <Image source={{ uri: item.img }} style={styles.messageAvatar} />
+
+              {item.badge > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{item.badge}</Text>
+                </View>
+              )}
+
+              <View style={styles.messageContent}>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.time}>{item.time}</Text>
+                </View>
+                <Text style={styles.messageText}>{item.message}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
+
+      {/* ========== CREATE GROUP MODAL ========== */}
+      {createGroupVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Tạo nhóm chat</Text>
+
+            <View style={styles.inputBox}>
+              <Text style={styles.label}>Tên nhóm</Text>
+              <TextInput
+                placeholder="Nhập tên nhóm..."
+                style={styles.input}
+                value={groupName}
+                onChangeText={setGroupName}
+              />
+            </View>
+
+            <Text style={[styles.label, { marginTop: 10 }]}>
+              Chọn thành viên
+            </Text>
+
+            <FlatList
+              data={onlineUsers}
+              style={{ maxHeight: 150 }}
+              renderItem={({ item }) => {
+                const isSelected = selectedUsers.includes(item.id);
+                return (
+                  <TouchableOpacity
+                    style={styles.userRow}
+                    onPress={() => {
+                      if (isSelected) {
+                        setSelectedUsers(
+                          selectedUsers.filter((id) => id !== item.id)
+                        );
+                      } else {
+                        setSelectedUsers([...selectedUsers, item.id]);
+                      }
+                    }}
+                  >
+                    <Image
+                      source={{ uri: item.img }}
+                      style={styles.userAvatarSmall}
+                    />
+                    <Text style={styles.userName}>{item.name}</Text>
+
+                    <Ionicons
+                      name={isSelected ? "checkbox" : "square-outline"}
+                      size={22}
+                      color={isSelected ? "#3498db" : "#777"}
+                    />
+                  </TouchableOpacity>
+                );
+              }}
+            />
+
+            {/* Buttons */}
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                onPress={() => setCreateGroupVisible(false)}
+                style={styles.cancelBtn}
+              >
+                <Text style={styles.cancelText}>Hủy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.createBtn}
+                onPress={() => {
+                  if (!groupName.trim()) {
+                    alert("Vui lòng nhập tên nhóm!");
+                    return;
+                  }
+                  if (selectedUsers.length < 2) {
+                    alert("Nhóm cần ít nhất 2 thành viên!");
+                    return;
+                  }
+
+                  const newGroup = {
+                    id: Date.now().toString(),
+                    name: groupName,
+                    members: onlineUsers.filter((u) =>
+                      selectedUsers.includes(u.id)
+                    ),
+                    lastMessage: "Group created",
+                    time: "Now",
+                  };
+
+                  setGroups([...groups, newGroup]);
+                  navigation.navigate("GroupChat", newGroup);
+
+                  setCreateGroupVisible(false);
+                  setGroupName("");
+                  setSelectedUsers([]);
+                }}
+              >
+                <Text style={styles.createText}>Tạo nhóm</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Bottom TaskBar */}
       <TaskBar
         current={currentTab}
         onChange={(key) => {
           setCurrentTab(key);
-
-          // điều hướng theo key
           if (key === "home") navigation.navigate("Home");
           if (key === "messages") navigation.navigate("Message");
           if (key === "contacts") navigation.navigate("Contacts");
@@ -158,7 +302,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
 
-  // Header
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -173,18 +316,23 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
 
-  // Online users
+  createGroupButton: {
+    padding: 5,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+
   flatList_1: {
     flexGrow: 0,
     marginBottom: 10,
     paddingVertical: 5,
-    paddingHorizontal: 20,
   },
 
   onlineUser: {
     width: 70,
     alignItems: "center",
     marginRight: 18,
+    paddingHorizontal: 20,
   },
 
   onlineAvatar: {
@@ -192,10 +340,14 @@ const styles = StyleSheet.create({
     height: 65,
     borderRadius: 50,
   },
+
   onlineName: {
+    width: 70,
+    textAlign: "center",
     marginTop: 6,
     fontSize: 12,
   },
+
   onlineDot: {
     width: 14,
     height: 14,
@@ -208,13 +360,13 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
   },
 
-  // Message
   messageContainer: {
     flexDirection: "row",
-    marginBottom: 25,
+    marginBottom: 22,
     alignItems: "center",
     paddingHorizontal: 20,
   },
+
   messageAvatar: {
     width: 65,
     height: 65,
@@ -232,6 +384,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   badgeText: {
     color: "#fff",
     fontSize: 12,
@@ -261,5 +414,121 @@ const styles = StyleSheet.create({
   messageText: {
     marginTop: 5,
     color: "#555",
+  },
+
+  modalOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalBox: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+
+  inputBox: {
+    marginBottom: 10,
+  },
+
+  label: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+
+  userRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    justifyContent: "space-between",
+  },
+
+  userAvatarSmall: {
+    width: 40,
+    height: 40,
+    borderRadius: 50,
+    marginRight: 12,
+  },
+
+  userName: {
+    flex: 1,
+    fontSize: 15,
+  },
+
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 15,
+  },
+
+  cancelBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    marginRight: 10,
+  },
+
+  cancelText: {
+    color: "#777",
+    fontSize: 15,
+  },
+
+  createBtn: {
+    backgroundColor: "#3498db",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+  },
+
+  createText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "bold",
+  },
+
+  /* Group avatar stack */
+  groupAvatarWrapper: {
+    width: 65,
+    height: 65,
+    position: "relative",
+    marginRight: 12,
+  },
+
+  groupAvatar: {
+    width: 45,
+    height: 45,
+    borderRadius: 50,
+    position: "absolute",
+    left: 0,
+    top: 10,
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+
+  groupAvatar2: {
+    left: 20,
+    top: 0,
   },
 });

@@ -14,6 +14,8 @@ import DetailChat from './screens/chatUI';
 import ChatDesc from './screens/chatDesc';
 import ContactScreen from './screens/contactUI';
 import PhoneUIScreen from './screens/phoneUI';
+import GroupChatPage from './screens/groupChatUI';
+import GroupInfoPage from './screens/groupChatInfo';
 
 const Stack = createStackNavigator();
 
@@ -30,6 +32,8 @@ export default function App() {
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Contacts" component={ContactScreen} />
           <Stack.Screen name="PhoneUI" component={PhoneUIScreen} />
+          <Stack.Screen name="GroupChat" component={GroupChatPage} />
+          <Stack.Screen name="GroupInfo" component={GroupInfoPage} />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
