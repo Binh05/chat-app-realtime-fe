@@ -12,6 +12,7 @@ import ProfileScreen from '../screens/chatDesc';
 import TaskBar from '../components/TaskBar';
 import MessagePage from '../screens/messagePage';
 import MessageDetailPage from '../screens/chatUI';
+import SettingScreen from '../screens/setting';
 
 const Stack = createNativeStackNavigator();
 
