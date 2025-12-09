@@ -1,33 +1,33 @@
-import React, { useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StyleSheet } from 'react-native';
+import React, { useState } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { View, StyleSheet } from "react-native";
 
-import LoginScreen from '../screens/login';
-import RegisterScreen from '../screens/register';
-import HomeScreen from '../screens/home';
-import MessageScreen from '../screens/messagePage';
-import ContactsScreen from '../screens/chatUI';
-import ProfileScreen from '../screens/chatDesc';
-import TaskBar from '../components/TaskBar';
-import MessagePage from '../screens/messagePage';
-import MessageDetailPage from '../screens/chatUI';
-import SettingScreen from '../screens/setting';
+import LoginScreen from "../screens/auth/login";
+import RegisterScreen from "../screens/auth/register";
+import HomeScreen from "../screens/home";
+import MessageScreen from "../screens/messagePage";
+import ContactsScreen from "../screens/chatUI";
+import ProfileScreen from "../screens/chatDesc";
+import TaskBar from "../components/TaskBar";
+import MessagePage from "../screens/messagePage";
+import MessageDetailPage from "../screens/chatUI";
+import SettingScreen from "../screens/setting";
 
 const Stack = createNativeStackNavigator();
 
 function MainTabs() {
-  const [currentTab, setCurrentTab] = useState('home');
+  const [currentTab, setCurrentTab] = useState("home");
 
   const renderScreen = () => {
     switch (currentTab) {
-      case 'home':
+      case "home":
         return <HomeScreen />;
-      case 'messages':
+      case "messages":
         return <MessageDetailPage />;
-      case 'contacts':
+      case "contacts":
         return <ContactsScreen />;
-      case 'profile':
+      case "profile":
         return <ProfileScreen />;
       default:
         return <HomeScreen />;
@@ -36,9 +36,7 @@ function MainTabs() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        {renderScreen()}
-      </View>
+      <View style={styles.content}>{renderScreen()}</View>
       <TaskBar current={currentTab} onChange={setCurrentTab} />
     </View>
   );
@@ -47,8 +45,8 @@ function MainTabs() {
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator 
-        initialRouteName="Login" 
+      <Stack.Navigator
+        initialRouteName="Login"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -62,7 +60,7 @@ export default function AppNavigator() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   content: {
     flex: 1,
