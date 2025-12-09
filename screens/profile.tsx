@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -10,24 +10,57 @@ import {
   SafeAreaView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import TaskBar from '../components/TaskBar';
 
 const { width } = Dimensions.get('window');
 
 const ProfileScreen = ({ navigation }: { navigation: any }) => {
+  const [currentTab, setCurrentTab] = useState('profile');
+
+  const handleTabChange = (key: string) => {
+    setCurrentTab(key);
+    switch (key) {
+      case 'home':
+        navigation.navigate('Home');
+        break;
+      case 'messages':
+        navigation.navigate('Message');
+        break;
+      case 'contacts':
+        navigation.navigate('Contacts');
+        break;
+      case 'setting':
+        navigation.navigate('Setting');
+        break;
+      case 'profile':
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header Area (Transparent overlay) */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.iconBtn}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
+        
         <View style={styles.headerActions}>
-           <Ionicons name="battery-charging-outline" size={24} color="#333" style={{marginRight: 10}}/> 
-           {/* Mockup status bar icons */}
+           <TouchableOpacity 
+             onPress={() => navigation.navigate('Setting')}
+             style={{ padding: 5, marginRight: 5 }}
+           >
+             <Ionicons name="settings-outline" size={24} color="#333" />
+           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 80 }}
+      >
         {/* Cover Image Wrapper */}
         <View style={styles.coverContainer}>
           <View style={styles.coverPlaceholder} />
@@ -64,11 +97,15 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Post Input */}
-          <View style={styles.postInputContainer}>
+          {/* --- CẬP NHẬT Ở ĐÂY: Post Input --- */}
+          {/* Đổi từ View sang TouchableOpacity để bấm được */}
+          <TouchableOpacity 
+            style={styles.postInputContainer}
+            onPress={() => navigation.navigate('CreatePostProfile')}
+          >
             <Text style={styles.placeholderText}>Bạn đang nghĩ gì?</Text>
             <Ionicons name="images-outline" size={24} color="#666" />
-          </View>
+          </TouchableOpacity>
 
           {/* Timeline Feed */}
           <View style={styles.feedItem}>
@@ -95,11 +132,12 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
               <Ionicons name="ellipsis-horizontal" size={20} color="#666" />
             </View>
           </View>
-
-          {/* Spacer for bottom */}
-          <View style={{height: 50}} />
+          
         </View>
       </ScrollView>
+
+      {/* --- MỚI: Hiển thị TaskBar ở dưới cùng --- */}
+      <TaskBar current={currentTab} onChange={handleTabChange} />
     </View>
   );
 };
@@ -113,14 +151,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', padding: 15, paddingTop: 50 
   },
   iconBtn: { padding: 5 },
-  headerActions: { flexDirection: 'row' },
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
 
   // Cover & Shape
   coverContainer: { height: 220, backgroundColor: '#EFEFEF' },
   coverPlaceholder: { flex: 1, backgroundColor: '#E0E0E0' }, 
 
   contentContainer: { 
-    marginTop: -40, // Kéo phần trắng lên đè vào cover
+    marginTop: -40, 
     backgroundColor: '#fff', 
     borderTopLeftRadius: 30, 
     borderTopRightRadius: 30,
@@ -131,7 +169,7 @@ const styles = StyleSheet.create({
   // Avatar Logic
   avatarContainer: { 
     alignSelf: 'center', 
-    marginTop: -50, // Kéo avatar lên trên ranh giới
+    marginTop: -50, 
     borderWidth: 4, 
     borderColor: '#fff', 
     borderRadius: 50 

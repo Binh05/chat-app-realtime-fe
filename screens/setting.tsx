@@ -7,192 +7,178 @@ import {
   TouchableOpacity, 
   ScrollView, 
   Switch,
-  SafeAreaView 
+  SafeAreaView,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; 
-import { StackNavigationProp } from '@react-navigation/stack';
-import TaskBar from '../components/TaskBar';
 
 interface SettingScreenProps {
-  navigation: StackNavigationProp<any>;
+  navigation: any; 
 }
 
 const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(true);
-  const [currentTab, setCurrentTab] = useState('profile'); 
 
   const navigateToProfile = () => {
     navigation.navigate('Profile');
   };
 
-  const handleTabChange = (key: string) => {
-    setCurrentTab(key);
-
-    switch(key) {
-      case 'home':
-        navigation.navigate('Home');
-        break;
-      case 'messages':
-        navigation.navigate('Message');
-        break;
-      case 'contacts':
-        navigation.navigate('Contacts');
-        break;
-      case 'profile':
-
-        break;
-    }
+  // --- MỚI: Hàm quay về màn hình Home ---
+  const navigateToHome = () => {
+    navigation.navigate('Home'); 
+    // Hoặc dùng navigation.goBack() nếu muốn quay lại trang trước đó bất kỳ
   };
 
+  const handlePressPlaceholder = (featureName: string) => {
+    Alert.alert("Thông báo", `Tính năng ${featureName} đang được phát triển!`);
+  };
 
-  const SettingItem = ({ icon, label, onPress }: { icon: any, label: string, onPress?: () => void }) => (
-    <TouchableOpacity style={styles.rowItem} onPress={onPress}>
-      <View style={styles.rowLeft}>
-        <Ionicons name={icon} size={22} color="#333" />
-        <Text style={styles.label}>{label}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color="#ccc" />
-    </TouchableOpacity>
-  );
-
-  const NavIcon = ({ icon, label, active }: { icon: any, label: string, active: boolean }) => (
-    <TouchableOpacity 
-      style={styles.navItem} 
-      onPress={() => handleTabChange(label.toLowerCase())}
-    >
-      <Ionicons name={icon} size={24} color={active ? '#00B4D8' : '#333'} />
-      <Text style={[styles.navLabel, { color: active ? '#00B4D8' : '#333' }]}>{label}</Text>
-    </TouchableOpacity>
+  const SettingItem = ({ icon, label, onPress, isLast = false }: { icon: any, label: string, onPress?: () => void, isLast?: boolean }) => (
+    <>
+      <TouchableOpacity style={styles.rowItem} onPress={onPress}>
+        <View style={styles.rowLeft}>
+          <Ionicons name={icon} size={22} color="#333" />
+          <Text style={styles.label}>{label}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="#ccc" />
+      </TouchableOpacity>
+      {!isLast && <View style={styles.divider} />}
+    </>
   );
 
   return (
-    <View style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Menu</Text>
-          <TouchableOpacity>
-            <Ionicons name="search" size={24} color="#333" />
-          </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        {/* --- ĐÃ SỬA: Nút Home có thể bấm được --- */}
+        <TouchableOpacity style={styles.backButton} onPress={navigateToHome}>
+          <Ionicons name="arrow-back" size={24} color="#0077B6" style={{marginRight: 8}}/>
+          <Text style={styles.headerTitle}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.searchBtn}>
+          <Ionicons name="search" size={24} color="#333" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* User Card - Điểm chạm để sang Profile */}
+        <TouchableOpacity style={styles.userCard} onPress={navigateToProfile}>
+          <Image 
+            source={{ uri: 'https://i.pravatar.cc/150?img=5' }} 
+            style={styles.avatar} 
+          />
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>Adina Nurrahma</Text>
+            <Text style={styles.userBio}>Trust your feelings, be a good human being.</Text>
+          </View>
+          <View style={styles.arrowContainer}>
+             <Ionicons name="chevron-forward" size={20} color="#fff" />
+          </View>
+        </TouchableOpacity>
+
+        {/* Section Title */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name="settings-outline" size={24} color="#333" style={{marginRight: 8}} />
+          <Text style={styles.sectionTitle}>Cài đặt chung</Text>
         </View>
 
-        <ScrollView 
-          showsVerticalScrollIndicator={false} 
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* User Card - Bấm vào đây để sang Profile */}
-          <TouchableOpacity style={styles.userCard} onPress={navigateToProfile}>
-            <Image 
-              source={{ uri: 'https://i.pravatar.cc/150?img=5' }} 
-              style={styles.avatar} 
-            />
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>Adina Nurrahma</Text>
-              <Text style={styles.userBio}>Trust your feelings, be a good human being.</Text>
+        {/* Group 1: Tài khoản */}
+        <View style={styles.groupContainer}>
+          <SettingItem 
+            icon="chatbox-ellipses-outline" 
+            label="Tin nhắn chờ" 
+            onPress={() => handlePressPlaceholder('Tin nhắn chờ')}
+          />
+          <SettingItem 
+            icon="people-outline" 
+            label="Phân loại bạn bè" 
+            isLast={true}
+            onPress={() => handlePressPlaceholder('Phân loại')}
+          />
+        </View>
+
+        {/* Group 2: Hệ thống */}
+        <View style={styles.groupContainer}>
+          <SettingItem 
+            icon="create-outline" 
+            label="Chỉnh sửa thông tin" 
+            onPress={navigateToProfile}
+          />
+          
+          <View style={styles.rowItem}>
+            <View style={styles.rowLeft}>
+              <Ionicons name="notifications-outline" size={22} color="#333" />
+              <Text style={styles.label}>Thông báo</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" />
-          </TouchableOpacity>
-
-          {/* Section Title */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="settings-outline" size={24} color="#333" style={{marginRight: 8}} />
-            <Text style={styles.sectionTitle}>Settings</Text>
-          </View>
-
-          {/* Group 1 */}
-          <View style={styles.groupContainer}>
-            <SettingItem 
-              icon="chatbox-ellipses-outline" 
-              label="Message requests" 
-              onPress={() => navigation.navigate('MessageRequests')}
-            />
-            <View style={styles.divider} />
-            <SettingItem 
-              icon="people-outline" 
-              label="Category" 
-              onPress={() => navigation.navigate('Category')}
+            <Switch
+              value={isNotificationEnabled}
+              onValueChange={setIsNotificationEnabled}
+              trackColor={{ false: '#767577', true: '#00B4D8' }}
+              thumbColor={isNotificationEnabled ? '#fff' : '#f4f3f4'}
             />
           </View>
+          <View style={styles.divider} />
 
-          {/* Group 2 */}
-          <View style={styles.groupContainer}>
-            <SettingItem 
-              icon="create-outline" 
-              label="Edit profile information" 
-              onPress={navigateToProfile}
-            />
-            <View style={styles.divider} />
-            <View style={styles.rowItem}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="notifications-outline" size={22} color="#333" />
-                <Text style={styles.label}>Notifications</Text>
-              </View>
-              <Switch
-                value={isNotificationEnabled}
-                onValueChange={setIsNotificationEnabled}
-                trackColor={{ false: '#767577', true: '#00B4D8' }}
-                thumbColor={isNotificationEnabled ? '#fff' : '#f4f3f4'}
-              />
-            </View>
-            <View style={styles.divider} />
-            <SettingItem 
-              icon="language-outline" 
-              label="Language" 
-              onPress={() => navigation.navigate('Language')}
-            />
-          </View>
+          <SettingItem 
+            icon="language-outline" 
+            label="Ngôn ngữ" 
+            isLast={true}
+            onPress={() => handlePressPlaceholder('Ngôn ngữ')}
+          />
+        </View>
 
-          {/* Group 3 */}
-          <View style={styles.groupContainer}>
-            <SettingItem 
-              icon="shield-checkmark-outline" 
-              label="Security" 
-              onPress={() => navigation.navigate('Security')}
-            />
-            <View style={styles.divider} />
-            <SettingItem 
-              icon="color-palette-outline" 
-              label="Theme" 
-              onPress={() => navigation.navigate('Theme')}
-            />
-          </View>
+        {/* Group 3: Bảo mật & Giao diện */}
+        <View style={styles.groupContainer}>
+          <SettingItem 
+            icon="shield-checkmark-outline" 
+            label="Bảo mật" 
+            onPress={() => handlePressPlaceholder('Bảo mật')}
+          />
+          <SettingItem 
+            icon="color-palette-outline" 
+            label="Giao diện (Theme)" 
+            isLast={true}
+            onPress={() => handlePressPlaceholder('Theme')}
+          />
+        </View>
 
-          {/* Group 4 */}
-          <View style={styles.groupContainer}>
-            <SettingItem 
-              icon="help-circle-outline" 
-              label="Help & Support" 
-              onPress={() => navigation.navigate('HelpSupport')}
-            />
-            <View style={styles.divider} />
-            <SettingItem 
-              icon="chatbubble-outline" 
-              label="Contact us" 
-              onPress={() => navigation.navigate('ContactUs')}
-            />
-            <View style={styles.divider} />
-            <SettingItem 
-              icon="lock-closed-outline" 
-              label="Privacy policy" 
-              onPress={() => navigation.navigate('PrivacyPolicy')}
-            />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+        {/* Group 4: Hỗ trợ */}
+        <View style={styles.groupContainer}>
+          <SettingItem 
+            icon="help-circle-outline" 
+            label="Trợ giúp & Hỗ trợ" 
+            onPress={() => handlePressPlaceholder('Trợ giúp')}
+          />
+          <SettingItem 
+            icon="chatbubble-outline" 
+            label="Liên hệ với chúng tôi" 
+            onPress={() => handlePressPlaceholder('Liên hệ')}
+          />
+          <SettingItem 
+            icon="lock-closed-outline" 
+            label="Chính sách quyền riêng tư" 
+            isLast={true}
+            onPress={() => handlePressPlaceholder('Chính sách')}
+          />
+        </View>
+        
+        <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.navigate('Login')}>
+           <Text style={styles.logoutText}>Đăng xuất</Text>
+        </TouchableOpacity>
 
-      {/* TaskBar giống như Contacts screen */}
-      <TaskBar
-        current={currentTab}
-        onChange={handleTabChange}
-      />
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#fff' 
+    backgroundColor: '#F2F4F8'
   },
   header: { 
     flexDirection: 'row', 
@@ -200,33 +186,47 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     padding: 20,
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee'
+    marginBottom: 10
+  },
+  // --- MỚI: Style cho nút Home ---
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerTitle: { 
-    fontSize: 24, 
+    fontSize: 26, 
     fontWeight: 'bold', 
     color: '#0077B6'
   },
+  searchBtn: {
+    padding: 5,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 20
+  },
   scrollContent: { 
     paddingHorizontal: 20, 
-    paddingBottom: 20 
+    paddingBottom: 100 
   },
   
   userCard: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    backgroundColor: '#f8f9fa', 
-    borderRadius: 16, 
+    backgroundColor: '#fff', 
+    borderRadius: 20, 
     padding: 15, 
     marginBottom: 20, 
-    borderWidth: 1,
-    borderColor: '#e9ecef'
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2
   },
   avatar: { 
     width: 60, 
     height: 60, 
-    borderRadius: 30 
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#00B4D8'
   },
   userInfo: { 
     flex: 1, 
@@ -238,36 +238,45 @@ const styles = StyleSheet.create({
     color: '#0077B6' 
   },
   userBio: { 
-    fontSize: 14, 
+    fontSize: 13, 
     color: '#6c757d', 
     marginTop: 4 
+  },
+  arrowContainer: {
+    backgroundColor: '#00B4D8',
+    padding: 5,
+    borderRadius: 15
   },
 
   sectionHeader: { 
     flexDirection: 'row', 
     alignItems: 'center', 
     marginBottom: 10,
-    marginTop: 10
+    marginTop: 5,
+    paddingLeft: 5
   },
   sectionTitle: { 
     fontSize: 18, 
-    fontWeight: '600', 
+    fontWeight: '700', 
     color: '#333' 
   },
 
   groupContainer: { 
-    backgroundColor: '#f8f9fa', 
-    borderRadius: 12, 
+    backgroundColor: '#fff', 
+    borderRadius: 16, 
     marginBottom: 15, 
     paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: '#e9ecef'
+    paddingVertical: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    elevation: 1
   },
   rowItem: { 
     flexDirection: 'row', 
     alignItems: 'center', 
     justifyContent: 'space-between', 
-    paddingVertical: 15 
+    paddingVertical: 16 
   },
   rowLeft: { 
     flexDirection: 'row', 
@@ -276,29 +285,26 @@ const styles = StyleSheet.create({
   label: { 
     marginLeft: 15, 
     fontSize: 15, 
-    color: '#333' 
+    color: '#333',
+    fontWeight: '500'
   },
   divider: { 
     height: 1, 
-    backgroundColor: '#e9ecef' 
+    backgroundColor: '#F0F0F0',
+    marginLeft: 37 
   },
   
-  bottomNav: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-around', 
-    paddingVertical: 12, 
-    backgroundColor: '#fff', 
-    borderTopWidth: 1, 
-    borderTopColor: '#dee2e6' 
+  logoutButton: {
+    marginTop: 10,
+    backgroundColor: '#FFE5E5',
+    padding: 15,
+    borderRadius: 16,
+    alignItems: 'center'
   },
-  navItem: { 
-    alignItems: 'center',
-    padding: 8
-  },
-  navLabel: { 
-    fontSize: 12, 
-    marginTop: 4,
-    fontWeight: '500'
+  logoutText: {
+    color: '#FF4757',
+    fontWeight: 'bold',
+    fontSize: 16
   }
 });
 
