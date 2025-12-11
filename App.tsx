@@ -1,7 +1,6 @@
 import * as React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { useAppSelector } from "./hooks/hook";
 // Import Provider của react-native-paper
 import { Provider as PaperProvider } from "react-native-paper";
 
@@ -16,22 +15,23 @@ import ContactScreen from "./screens/contactUI";
 import PhoneUIScreen from "./screens/phoneUI";
 import GroupChatPage from "./screens/groupChatUI";
 import GroupInfoPage from "./screens/groupChatInfo";
-import { Provider } from "react-redux";
-import { store } from "./store/store";
 import ProfileScreen from "./screens/profile";
+import AppProvider from "./AppProvider";
+import { useContextSelector } from "use-context-selector";
+import { UserContext } from "./contexts/UserContext";
 const Stack = createStackNavigator();
 
 function AppContent() {
-  const user = useAppSelector((state) => state.user);
+  const user = useContextSelector(UserContext, (v) => v.state);
   return (
     <PaperProvider>
       {/* <<< THÊM DÒNG NÀY */}
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="Message"
+          initialRouteName="Login"
           screenOptions={{ headerShown: false }}
         >
-          {!user?.token ? (
+          {user?.token ? (
             <>
               <Stack.Screen name="Message" component={MessageScreen} />
               <Stack.Screen name="Detail" component={DetailChat} />
@@ -57,8 +57,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <Provider store={store}>
+    <AppProvider>
       <AppContent />
-    </Provider>
+    </AppProvider>
   );
 }

@@ -13,12 +13,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Loading from "../../components/ui/loading";
 import * as Haptics from "expo-haptics";
 import { api } from "../../utils/api";
-import { useAppDispatch } from "../../hooks/hook";
 import { setUser } from "../../slices/userSlice";
 import { Snackbar } from "react-native-paper";
+import { useContextSelector } from "use-context-selector";
+import { UserContext } from "../../contexts/UserContext";
 
 export default function LoginScreen({ navigation }: any) {
-  const dispatch = useAppDispatch();
+  const setUser = useContextSelector(UserContext, (v) => v.setUser);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -45,7 +46,7 @@ export default function LoginScreen({ navigation }: any) {
       if (res.status === 200) {
         const { accessToken, username, phone, avatarUrl } = res.data;
 
-        dispatch(setUser({ username, phone, token: accessToken, avatarUrl }));
+        setUser({ username, phone, token: accessToken, avatarUrl });
 
         setLoading(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
