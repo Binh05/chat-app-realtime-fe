@@ -13,7 +13,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Loading from "../../components/ui/loading";
 import * as Haptics from "expo-haptics";
 import { api } from "../../utils/api";
-import { setUser } from "../../slices/userSlice";
 import { Snackbar } from "react-native-paper";
 import { useContextSelector } from "use-context-selector";
 import { UserContext } from "../../contexts/UserContext";
