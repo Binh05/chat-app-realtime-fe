@@ -16,6 +16,8 @@ import ContactScreen from './screens/contactUI';
 import PhoneUIScreen from './screens/phoneUI';
 import GroupChatPage from './screens/groupChatUI';
 import GroupInfoPage from './screens/groupChatInfo';
+import ProfileScreen from './screens/profile';
+import SettingScreen from './screens/setting';
 
 const Stack = createStackNavigator();
 
@@ -34,6 +36,8 @@ export default function App() {
           <Stack.Screen name="PhoneUI" component={PhoneUIScreen} />
           <Stack.Screen name="GroupChat" component={GroupChatPage} />
           <Stack.Screen name="GroupInfo" component={GroupInfoPage} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Settings" component={SettingScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
