@@ -13,6 +13,7 @@ import TaskBar from "../components/TaskBar";
 import MessagePage from "../screens/messagePage";
 import MessageDetailPage from "../screens/chatUI";
 import SettingScreen from "../screens/setting";
+import CreatePostScreen from "../screens/createPostProfile";
 
 const Stack = createNativeStackNavigator();
 

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+
 // Import Provider của react-native-paper
 import { Provider as PaperProvider } from "react-native-paper";
 
@@ -19,12 +20,15 @@ import ProfileScreen from "./screens/profile";
 import AppProvider from "./AppProvider";
 import { useContextSelector } from "use-context-selector";
 import { UserContext } from "./contexts/UserContext";
+import SettingScreen from "./screens/setting";
+import { CreatePostProfile } from "./screens/createPostProfile";
 const Stack = createStackNavigator();
 
 function AppContent() {
   const user = useContextSelector(UserContext, (v) => v.state);
   return (
     <PaperProvider>
+      {" "}
       {/* <<< THÊM DÒNG NÀY */}
       <NavigationContainer>
         <Stack.Navigator
@@ -38,10 +42,16 @@ function AppContent() {
               <Stack.Screen name="ChatDesc" component={ChatDesc} />
               <Stack.Screen name="Home" component={HomeScreen} />
               <Stack.Screen name="Contacts" component={ContactScreen} />
-              <Stack.Screen name="Profile" component={ProfileScreen} />
               <Stack.Screen name="PhoneUI" component={PhoneUIScreen} />
               <Stack.Screen name="GroupChat" component={GroupChatPage} />
               <Stack.Screen name="GroupInfo" component={GroupInfoPage} />
+              <Stack.Screen name="Setting" component={SettingScreen} />
+              <Stack.Screen name="Profile" component={ProfileScreen} />
+              <Stack.Screen
+                name="CreatePostProfile"
+                component={CreatePostProfile}
+                options={{ presentation: "modal" }}
+              />
             </>
           ) : (
             <>
