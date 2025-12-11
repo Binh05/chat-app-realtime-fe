@@ -32,10 +32,10 @@ function AppContent() {
       {/* <<< THÊM DÒNG NÀY */}
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="Login"
+          initialRouteName="Message"
           screenOptions={{ headerShown: false }}
         >
-          {user?.token ? (
+          {!user?.token ? (
             <>
               <Stack.Screen name="Message" component={MessageScreen} />
               <Stack.Screen name="Detail" component={DetailChat} />
