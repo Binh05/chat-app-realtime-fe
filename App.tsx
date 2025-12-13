@@ -28,7 +28,6 @@ function AppContent() {
   const user = useContextSelector(UserContext, (v) => v.state);
   return (
     <PaperProvider>
-      {" "}
       {/* <<< THÊM DÒNG NÀY */}
       <NavigationContainer>
         <Stack.Navigator

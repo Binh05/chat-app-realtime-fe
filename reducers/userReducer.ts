@@ -30,7 +30,7 @@ export function userReducer(
     case "SET_USER":
       return {
         ...state,
-        ...action.payload, // giống Redux Toolkit partial update
+        ...action.payload,
       };
 
     case "CLEAR_USER":
