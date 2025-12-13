@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
   StyleSheet,
@@ -15,6 +15,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 
 import NotificationDropdown from "../components/ui/notification";
 import TaskBar from "../components/TaskBar";
+import { useRoute } from "@react-navigation/native";
 
 type Props = {
   navigation: StackNavigationProp<any>;
@@ -57,6 +58,8 @@ export default function MessagePage({ navigation }: Props) {
   ];
 
   const [currentTab, setCurrentTab] = useState("messages");
+  const [searchText, setSearchText] = useState("");
+
   const [createGroupVisible, setCreateGroupVisible] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [groupName, setGroupName] = useState("");
@@ -67,23 +70,56 @@ export default function MessagePage({ navigation }: Props) {
     ...messages.map((m) => ({ type: "private", ...m })),
   ];
 
+  // Lọc theo tên
+  const filteredChats = useMemo(() => {
+    return chatList.filter((c) =>
+      c.name.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }, [searchText]);
+
+  const route = useRoute();
+  const routeToKey: Record<string, string> = {
+    Home: "home",
+    Message: "messages",
+    Contacts: "contacts",
+    Profile: "profile",
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <Image
-          source={{ uri: "https://i.pravatar.cc/100?img=5" }}
-          style={styles.headerAvatar}
-        />
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+          <Image
+            source={{ uri: "https://i.pravatar.cc/100?img=5" }}
+            style={styles.headerAvatar}
+          />
+        </TouchableOpacity>
         <NotificationDropdown />
       </View>
 
-      <TouchableOpacity
-        style={styles.createGroupButton}
-        onPress={() => setCreateGroupVisible(true)}
-      >
-        <Ionicons name="add-circle-outline" size={28} color="#333" />
-      </TouchableOpacity>
+      <View style={{ flexDirection: "row" }}>
+        {/* CREATE GROUP BUTTON */}
+        <View style={{ width: "15%" }}>
+          <TouchableOpacity
+            style={styles.createGroupButton}
+            onPress={() => setCreateGroupVisible(true)}
+          >
+            <Ionicons name="add-circle-outline" size={28} color="#333" />
+          </TouchableOpacity>
+        </View>
+        {/* SEARCH BAR */}
+        <View style={styles.searchBox}>
+          <Ionicons name="search-outline" size={20} color="#555" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search for friends..."
+            placeholderTextColor="#999"
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+        </View>
+      </View>
 
       {/* ========== ONLINE USERS ========== */}
       <Text style={styles.title}>ONLINE USERS</Text>
@@ -274,7 +310,7 @@ export default function MessagePage({ navigation }: Props) {
 
       {/* Bottom TaskBar */}
       <TaskBar
-        current={currentTab}
+        current={routeToKey[route.name] || "home"}
         onChange={(key) => {
           setCurrentTab(key);
           if (key === "home") navigation.navigate("Home");
@@ -317,9 +353,28 @@ const styles = StyleSheet.create({
   },
 
   createGroupButton: {
-    padding: 5,
-    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    height: 42,
+    borderRadius: 12,
     marginBottom: 10,
+  },
+
+  /* SEARCH */
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f1f1",
+    borderRadius: 12,
+    height: 42,
+    marginBottom: 15,
+    width: "80%",
+  },
+
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 15,
   },
 
   flatList_1: {

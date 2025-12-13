@@ -12,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
 import TaskBar from "../components/TaskBar";
+import { useRoute } from "@react-navigation/native";
 
 type Props = {
   navigation: StackNavigationProp<any>;
@@ -77,14 +78,25 @@ export default function DoctorListScreen({ navigation }: Props) {
   const [filterPhone, setFilterPhone] = useState(false);
   const [searchText, setSearchText] = useState("");
 
+  const [showInvites, setShowInvites] = useState(false);
+
   // Chọn danh sách dựa theo chế độ filter
-  const filteredUsers = filterPhone
+  const filteredUsers = showInvites
+    ? othersList // danh sách lời mời kết bạn
+    : filterPhone
     ? othersList.filter((user) => user.phone.includes(searchText))
     : userList.filter((user) =>
         user.name.toLowerCase().includes(searchText.toLowerCase())
       );
 
   const [currentTab, setCurrentTab] = useState("contacts");
+  const route = useRoute();
+  const routeToKey: Record<string, string> = {
+    Home: "home",
+    Message: "messages",
+    Contacts: "contacts",
+    Profile: "profile",
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -109,10 +121,12 @@ export default function DoctorListScreen({ navigation }: Props) {
           <Text style={styles.sortText}>Sort By</Text>
 
           <View style={styles.row}>
+            {/* Sort A-Z */}
             <TouchableOpacity style={styles.sortBtn}>
               <Text style={styles.sortBtnText}>A → Z</Text>
             </TouchableOpacity>
 
+            {/* Filter */}
             <TouchableOpacity
               style={[
                 styles.filterBtn,
@@ -120,6 +134,7 @@ export default function DoctorListScreen({ navigation }: Props) {
               ]}
               onPress={() => {
                 setFilterPhone(!filterPhone);
+                setShowInvites(false);
                 setSearchText("");
               }}
             >
@@ -127,6 +142,25 @@ export default function DoctorListScreen({ navigation }: Props) {
                 style={[styles.filterText, filterPhone && { color: "#fff" }]}
               >
                 {filterPhone ? "Phone" : "Filter"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Accept Button */}
+            <TouchableOpacity
+              style={[
+                styles.acceptBtn,
+                showInvites && { backgroundColor: "#0077B6" },
+              ]}
+              onPress={() => {
+                setShowInvites(!showInvites);
+                setFilterPhone(false);
+                setSearchText("");
+              }}
+            >
+              <Text
+                style={[styles.acceptBtnText, showInvites && { color: "#fff" }]}
+              >
+                Accept
               </Text>
             </TouchableOpacity>
           </View>
@@ -149,7 +183,47 @@ export default function DoctorListScreen({ navigation }: Props) {
 
                 {/* Action buttons based on mode */}
                 <View style={styles.actionRow}>
-                  {filterPhone ? (
+                  {showInvites ? (
+                    <>
+                      <TouchableOpacity
+                        style={styles.infoBtn}
+                        onPress={() => {
+                          setSelectedUser(item);
+                          setInfoVisible(true);
+                        }}
+                      >
+                        <Text style={styles.infoBtnText}>Info</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.infoBtn, { borderColor: "green" }]}
+                        onPress={() => {
+                          // Accept: đưa vào userList
+                          setUserList([...userList, item]);
+                          setOthersList(
+                            othersList.filter((x) => x.id !== item.id)
+                          );
+                        }}
+                      >
+                        <Text style={[styles.infoBtnText, { color: "green" }]}>
+                          Accept
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.deleteBtn]}
+                        onPress={() => {
+                          // Ignore: xóa luôn
+                          setOthersList(
+                            othersList.filter((x) => x.id !== item.id)
+                          );
+                        }}
+                      >
+                        <Text style={[styles.infoBtnText, { color: "red" }]}>
+                          Ignore
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : filterPhone ? (
                     // Add button in phone filter mode
                     <>
                       <TouchableOpacity
@@ -281,10 +355,9 @@ export default function DoctorListScreen({ navigation }: Props) {
 
       {/* TASKBAR */}
       <TaskBar
-        current={currentTab}
+        current={routeToKey[route.name] || "home"}
         onChange={(key) => {
           setCurrentTab(key);
-
           if (key === "home") navigation.navigate("Home");
           if (key === "messages") navigation.navigate("Message");
           if (key === "contacts") navigation.navigate("Contacts");
@@ -359,6 +432,20 @@ const styles = StyleSheet.create({
 
   filterText: {
     color: "#00B4D8",
+    fontWeight: "600",
+  },
+
+  acceptBtn: {
+    borderWidth: 1,
+    borderColor: "#0077B6",
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 18,
+    marginLeft: 10,
+  },
+
+  acceptBtnText: {
+    color: "#0077B6",
     fontWeight: "600",
   },
 
