@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
 import TaskBar from "../components/TaskBar";
 import { useRoute } from "@react-navigation/native";
+import { api } from "../utils/api";
+import { useContextSelector } from "use-context-selector";
+import { FriendContext } from "../contexts/FriendContext";
+import LoadingInit from "../components/ui/loadingInit";
+import { Friend, Send } from "../reducers/friendReducer";
+import { Snackbar } from "react-native-paper";
+import Noti from "../components/ui/noti";
+import Loading from "../components/ui/loading";
 
 type Props = {
   navigation: StackNavigationProp<any>;
@@ -98,8 +106,162 @@ export default function DoctorListScreen({ navigation }: Props) {
     Profile: "profile",
   };
 
+  const [loading, setLoading] = useState(false);
+  const [loadingFetch, setLoadingFetch] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string>("");
+
+  const { friends, notFriends, sends, receiveds } = useContextSelector(
+    FriendContext,
+    (v) => v.state
+  );
+  const {
+    state,
+    addFriend,
+    removeFriend,
+    setFriends,
+    setNotFriends,
+    setSends,
+    setReceiveds,
+    addSend,
+    removeSend,
+    addNotFriend,
+    removeNotFriend,
+  } = useContextSelector(FriendContext, (v) => v);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoadingFetch(true);
+
+        const [friendRes, friendRequestRes, notFriendRes] = await Promise.all([
+          api.get("/friends"),
+          api.get("/friends/requests"),
+          api.get("/friends/notfriends"),
+        ]);
+
+        setFriends(friendRes.data.friends);
+        setNotFriends(notFriendRes.data.users);
+        setSends(friendRequestRes.data.send);
+        setReceiveds(friendRequestRes.data.received);
+      } catch (err: any) {
+        console.error(err);
+        console.log(err.response?.data?.message);
+      } finally {
+        setError(null);
+        setLoadingFetch(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const userlist = React.useMemo(() => {
+    const notfriendlist = notFriends.map((nf: Friend) => ({
+      ...nf,
+      type: "notfriend",
+    }));
+
+    const sendlist = sends.map((s: Send) => ({
+      ...s.to,
+      requestId: s._id,
+      type: "send",
+    }));
+    const users = [...sendlist, ...notfriendlist];
+    return users;
+  }, [notFriends, sends]);
+
+  const declineFriendRequest = async (friendRequestId: string) => {
+    try {
+      setLoading(true);
+      const res = await api.post(
+        `/friends/requests/${friendRequestId}/decline`
+      );
+
+      setReceiveds(receiveds.filter((r: any) => r._id !== friendRequestId));
+    } catch (error: any) {
+      console.log(error);
+      setError(error.response?.data?.message);
+    } finally {
+      setLoading(false);
+      setError(null);
+    }
+  };
+
+  const acceptFriendRequest = async (friendRequestId: string) => {
+    try {
+      setLoading(true);
+      const res = await api.post(`/friends/requests/${friendRequestId}/accept`);
+
+      addFriend(res.data.newFriend);
+      setReceiveds(receiveds.filter((r: any) => r._id !== friendRequestId));
+    } catch (error: any) {
+      console.log(error);
+      setError(error.response?.data?.message);
+    } finally {
+      setLoading(false);
+      setError(null);
+    }
+  };
+
+  const unfriend = async (friendId: string) => {
+    try {
+      setLoading(true);
+      await api.delete(`/friends/${friendId}/unfriend`);
+
+      removeFriend(friendId);
+    } catch (error: any) {
+      console.log("Loi khi unfriend", error);
+      setError(error.response?.data?.message || "Đã xảy ra lỗi, hãy thử lại.");
+    } finally {
+      setLoading(true);
+    }
+  };
+
+  const sendFriendRequest = async (friend: Friend) => {
+    try {
+      setLoading(true);
+
+      const res = await api.post("/friends/requests", { to: friend._id });
+      const newSend: Send = res.data.request;
+
+      removeNotFriend(friend._id);
+      addSend(newSend);
+
+      setSuccess(res.data.message);
+    } catch (error: any) {
+      setError(error.response?.data?.message || "Có lỗi xảy ra");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelFriendRequest = async (requestId: string) => {
+    try {
+      setLoading(true);
+
+      const send = state.sends.find((s: any) => s._id === requestId);
+      if (!send) return;
+
+      await api.post(`/friends/requests/${requestId}/cancel`);
+
+      removeSend(requestId);
+      addNotFriend(send.to);
+
+      setSuccess("Đã huỷ lời mời kết bạn");
+    } catch (error: any) {
+      setError(error.response?.data?.message || "Có lỗi xảy ra");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDismissSnackBar = () => setError(null);
+  const onDismissSnackBarNoti = () => setSuccess("");
+
   return (
     <View style={{ flex: 1 }}>
+      {loading && <Loading />}
       <View style={styles.container}>
         {/* Search */}
         <View style={styles.searchWrapper}>
@@ -171,113 +333,116 @@ export default function DoctorListScreen({ navigation }: Props) {
         </View>
 
         {/* User List */}
-        <FlatList
-          data={filteredUsers}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Image source={{ uri: item.img }} style={styles.avatar} />
+        {loadingFetch ? (
+          <LoadingInit />
+        ) : (
+          <FlatList
+            data={showInvites ? receiveds : filterPhone ? userlist : friends}
+            renderItem={({ item }) => (
+              <View style={styles.card}>
+                <Image
+                  source={{ uri: "https://i.pravatar.cc/150?img=12" }}
+                  style={styles.avatar}
+                />
 
-              <View style={styles.info}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.field}>{item.field}</Text>
+                <View style={styles.info}>
+                  <Text style={styles.name}>
+                    {showInvites
+                      ? item.from.username
+                      : filterPhone
+                      ? item.username
+                      : item.username}
+                  </Text>
+                  {/* <Text style={styles.field}>{item.field}</Text> */}
 
-                {/* Action buttons based on mode */}
-                <View style={styles.actionRow}>
-                  {showInvites ? (
-                    <>
-                      <TouchableOpacity
-                        style={styles.infoBtn}
-                        onPress={() => {
-                          setSelectedUser(item);
-                          setInfoVisible(true);
-                        }}
-                      >
-                        <Text style={styles.infoBtnText}>Info</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.infoBtn, { borderColor: "green" }]}
-                        onPress={() => {
-                          // Accept: đưa vào userList
-                          setUserList([...userList, item]);
-                          setOthersList(
-                            othersList.filter((x) => x.id !== item.id)
-                          );
-                        }}
-                      >
-                        <Text style={[styles.infoBtnText, { color: "green" }]}>
-                          Accept
-                        </Text>
-                      </TouchableOpacity>
+                  {/* Action buttons based on mode */}
+                  <View style={styles.actionRow}>
+                    {showInvites ? (
+                      <>
+                        <TouchableOpacity
+                          style={styles.infoBtn}
+                          onPress={() => {
+                            setSelectedUser(item);
+                            setInfoVisible(true);
+                          }}
+                        >
+                          <Text style={styles.infoBtnText}>Info</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.infoBtn, { borderColor: "green" }]}
+                          onPress={() => acceptFriendRequest(item._id)}
+                        >
+                          <Text
+                            style={[styles.infoBtnText, { color: "green" }]}
+                          >
+                            Accept
+                          </Text>
+                        </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={[styles.deleteBtn]}
-                        onPress={() => {
-                          // Ignore: xóa luôn
-                          setOthersList(
-                            othersList.filter((x) => x.id !== item.id)
-                          );
-                        }}
-                      >
-                        <Text style={[styles.infoBtnText, { color: "red" }]}>
-                          Ignore
-                        </Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : filterPhone ? (
-                    // Add button in phone filter mode
-                    <>
-                      <TouchableOpacity
-                        style={[styles.infoBtn, { borderColor: "green" }]}
-                        onPress={() => {
-                          setUserList([...userList, item]); // thêm bạn
-                          setOthersList(
-                            othersList.filter((x) => x.id !== item.id)
-                          );
-                        }}
-                      >
-                        <Text style={[styles.infoBtnText, { color: "green" }]}>
-                          Add
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.infoBtn}
-                        onPress={() => {
-                          setSelectedUser(item);
-                          setInfoVisible(true);
-                        }}
-                      >
-                        <Text style={styles.infoBtnText}>Info</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    // Regular mode → Info + Delete
-                    <>
-                      <TouchableOpacity
-                        style={styles.infoBtn}
-                        onPress={() => {
-                          setSelectedUser(item);
-                          setInfoVisible(true);
-                        }}
-                      >
-                        <Text style={styles.infoBtnText}>Info</Text>
-                      </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.deleteBtn]}
+                          onPress={() => declineFriendRequest(item._id)}
+                        >
+                          <Text style={[styles.infoBtnText, { color: "red" }]}>
+                            Ignore
+                          </Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : filterPhone ? (
+                      // Add button in phone filter mode
+                      <>
+                        <TouchableOpacity
+                          style={[styles.infoBtn, { borderColor: "green" }]}
+                          onPress={() =>
+                            item.type === "notfriend"
+                              ? sendFriendRequest(item)
+                              : cancelFriendRequest(item.requestId)
+                          }
+                        >
+                          <Text
+                            style={[styles.infoBtnText, { color: "green" }]}
+                          >
+                            {item.type === "notfriend" ? "Add" : "cancel"}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.infoBtn}
+                          onPress={() => {
+                            setSelectedUser(item);
+                            setInfoVisible(true);
+                          }}
+                        >
+                          <Text style={styles.infoBtnText}>Info</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      // Regular mode → Info + Delete
+                      <>
+                        <TouchableOpacity
+                          style={styles.infoBtn}
+                          onPress={() => {
+                            setSelectedUser(item);
+                            setInfoVisible(true);
+                          }}
+                        >
+                          <Text style={styles.infoBtnText}>Info</Text>
+                        </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={styles.deleteBtn}
-                        onPress={() => {
-                          setSelectedUser(item);
-                          setConfirmVisible(true);
-                        }}
-                      >
-                        <Text style={styles.infoBtnText}>Delete</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
+                        <TouchableOpacity
+                          style={styles.deleteBtn}
+                          onPress={() => unfriend(item._id)}
+                          disabled={loading}
+                        >
+                          <Text style={styles.infoBtnText}>Unfriend</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
-        />
+            )}
+          />
+        )}
 
         {/* Modal Info */}
         {selectedUser && (
@@ -353,6 +518,16 @@ export default function DoctorListScreen({ navigation }: Props) {
         </Modal>
       </View>
 
+      <Noti message={success} onDismissSnackBar={onDismissSnackBarNoti} />
+      <Snackbar
+        visible={!!error}
+        onDismiss={onDismissSnackBar}
+        duration={3000}
+        style={[styles.snackbar, { backgroundColor: "#FF4444" }]}
+      >
+        <Text>{error}</Text>
+      </Snackbar>
+
       {/* TASKBAR */}
       <TaskBar
         current={routeToKey[route.name] || "home"}
@@ -369,6 +544,11 @@ export default function DoctorListScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  snackbar: {
+    marginBottom: 80,
+    marginHorizontal: 16,
+    borderRadius: 8,
+  },
   container: {
     paddingTop: 55,
     paddingHorizontal: 20,

@@ -147,7 +147,11 @@ export default function LoginScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  snackbar: {},
+  snackbar: {
+    marginBottom: 20,
+    marginHorizontal: 16,
+    borderRadius: 8,
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
