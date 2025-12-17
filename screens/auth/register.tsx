@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../utils/api";
 import * as Haptics from "expo-haptics";
 import Loading from "../../components/ui/loading";
+import Noti from "../../components/ui/noti";
 
 export default function RegisterScreen({ navigation }: any) {
   const [username, setUsername] = useState("");
@@ -22,6 +23,7 @@ export default function RegisterScreen({ navigation }: any) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [success, setSuccess] = useState<string>("");
 
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
@@ -53,6 +55,7 @@ export default function RegisterScreen({ navigation }: any) {
 
       if (res.status === 200) {
         setLoading(false);
+        setSuccess("Đăng ký tài khoản thành công");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         navigation.navigate("Login");
@@ -67,6 +70,7 @@ export default function RegisterScreen({ navigation }: any) {
   };
 
   const onDismissSnackBar = () => setError(null);
+  const onDismissSnackBarNoti = () => setSuccess("");
 
   return (
     <SafeAreaView style={styles.container}>
@@ -167,6 +171,7 @@ export default function RegisterScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
         </ScrollView>
+        <Noti message={success} onDismissSnackBar={onDismissSnackBarNoti} />
         <Snackbar
           visible={!!error}
           onDismiss={onDismissSnackBar}

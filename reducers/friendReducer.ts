@@ -22,6 +22,7 @@ interface FriendState {
   notFriends: Friend[];
   sends: Send[];
   receiveds: received[];
+  isLoaded: boolean;
 }
 
 export const initialFriendState: FriendState = {
@@ -29,6 +30,7 @@ export const initialFriendState: FriendState = {
   notFriends: [],
   sends: [],
   receiveds: [],
+  isLoaded: false,
 };
 
 export function friendReducer(state: FriendState, action: any): FriendState {

@@ -43,9 +43,9 @@ export default function LoginScreen({ navigation }: any) {
       });
 
       if (res.status === 200) {
-        const { accessToken, username, phone, avatarUrl } = res.data;
+        const { accessToken, _id, username, phone, avatarUrl } = res.data;
 
-        setUser({ username, phone, token: accessToken, avatarUrl });
+        setUser({ _id, username, phone, token: accessToken, avatarUrl });
 
         setLoading(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

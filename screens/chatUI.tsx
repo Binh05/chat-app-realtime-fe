@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,41 +7,119 @@ import {
   FlatList,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useContextSelector } from "use-context-selector";
+import { ChatContext } from "../contexts/chatContext";
+import { UserContext } from "../contexts/UserContext";
+import { useFetchMessages } from "../hooks/useFetchMessages";
+import { useSendMessage } from "../hooks/useSendMessage";
+import { useMarkAsRead } from "../hooks/useMarkAsRead";
+import Noti from "../components/ui/noti";
+import { format } from "date-fns";
 
-export default function MessageDetailPage({ navigation }: any) {
-  const messages = [
-    {
-      id: 1,
-      type: "received",
-      sender: "Ellen Lambert",
-      message: "Chào cậu, làm quen nhé!",
-      time: "16.04",
-      images: [],
-    },
-    {
-      id: 2,
-      type: "received",
-      images: [
-        "https://picsum.photos/300/200",
-        "https://picsum.photos/300/201",
-        "https://picsum.photos/300/202",
-      ],
-      time: "16.04",
-    },
-    {
-      id: 3,
-      type: "sent",
-      message:
-        "That's very nice place! You guys made a very good decision. Can't wait to go on vacation!",
-      time: "16.04",
-      status: "Đã gửi",
-    },
-  ];
+export default function MessageDetailPage({
+  navigation,
+  route,
+  conversationId: initialConversationId,
+}: any) {
+  // Get conversationId từ route params hoặc props
+  const conversationId = route?.params?.conversationId || initialConversationId;
+
+  // Get current user
+  const { state: userState } = useContextSelector(UserContext, (v) => v);
+
+  // Get chat state để lấy messages
+  const { state: chatState } = useContextSelector(ChatContext, (v) => v);
+
+  // Fetch messages từ API
+  const { loading } = useFetchMessages(conversationId, true);
+
+  // Get messages của conversation này từ store
+  const messages = useMemo(() => {
+    const allMessages = chatState.messages[conversationId] || [];
+
+    // Format messages để hiển thị
+    return allMessages.map((msg: any) => {
+      const isSent = msg.senderId === userState._id;
+
+      return {
+        id: msg._id || msg.id,
+        type: isSent ? "sent" : "received",
+        message: msg.text || msg.content || msg.message,
+        time: format(msg.createdAt, "HH:mm"),
+
+        senderId: msg.senderId,
+        status: isSent ? "Đã gửi" : undefined,
+      };
+    });
+  }, [chatState.messages, conversationId, userState._id]);
+
+  // Use send message hook
+  const { sendMessage, sending } = useSendMessage();
+
+  // Use mark as read hook
+  const { markAsRead } = useMarkAsRead();
+
+  const [noti, setNoti] = useState<{
+    message: string | null;
+    type: "success" | "error";
+  }>({ message: "", type: "success" });
+
+  // FlatList ref for auto-scroll
+  const flatListRef = React.useRef<FlatList>(null);
+
+  // Mark as read when entering conversation
+  useFocusEffect(
+    React.useCallback(() => {
+      if (conversationId) {
+        markAsRead(conversationId);
+      }
+    }, [conversationId])
+  );
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messages.length > 0 && flatListRef.current) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages]);
 
   const [showEmoji, setShowEmoji] = React.useState(false);
   const [text, setText] = React.useState("");
+
+  const onDismissSnackBar = () => setNoti({ message: null, type: "success" });
+
+  const handleSendMessage = async () => {
+    try {
+      if (!text.trim()) {
+        setNoti({ message: "Lỗi, Vui lòng nhập tin nhắn", type: "error" });
+        return;
+      }
+
+      const result = await sendMessage(
+        conversationId,
+        otherUser?._id || otherUser?.id,
+        text
+      );
+    } catch (error: any) {
+      setNoti({
+        message:
+          error.response?.data?.message ||
+          error.message ||
+          "Gửi tin nhắn thất bại",
+        type: "error",
+      });
+    } finally {
+      setText("");
+      setShowEmoji(false);
+    }
+  };
 
   const emojis = [
     "😀",
@@ -64,6 +142,12 @@ export default function MessageDetailPage({ navigation }: any) {
     "🎉",
   ];
 
+  // Get other user info từ route params
+  const otherUser = route?.params?.user || {
+    username: "User",
+    avatarUrl: "https://i.pravatar.cc/150?img=47",
+  };
+
   return (
     <View style={styles.container}>
       {/* ================= HEADER ================= */}
@@ -75,13 +159,15 @@ export default function MessageDetailPage({ navigation }: any) {
           onPress={() => navigation.goBack()}
         ></Ionicons>
         <Image
-          source={{ uri: "https://i.pravatar.cc/150?img=47" }}
+          source={{
+            uri: otherUser?.avatarUrl || "https://i.pravatar.cc/150?img=47",
+          }}
           style={styles.headerAvatar}
           resizeMode="cover"
         />
 
         <View>
-          <Text style={styles.headerName}>Ellen Lambert</Text>
+          <Text style={styles.headerName}>{otherUser?.username || "User"}</Text>
           <View style={styles.onlineRow}>
             <View style={styles.onlineDot} />
             <Text style={styles.onlineText}>Online</Text>
@@ -112,57 +198,66 @@ export default function MessageDetailPage({ navigation }: any) {
       </View>
 
       {/* ================= MESSAGE LIST ================= */}
-      <FlatList
-        data={messages}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ padding: 15 }}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.messageRow,
-              item.type === "sent" && { justifyContent: "flex-end" },
-            ]}
-          >
-            {/* On left message: show avatar */}
-            {item.type === "received" && (
-              <Image
-                source={{ uri: "https://i.pravatar.cc/150?img=47" }}
-                style={styles.smallAvatar}
-              />
-            )}
-
+      {loading ? (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color="#3498db" />
+          <Text style={{ marginTop: 10, color: "#999" }}>
+            Đang tải tin nhắn...
+          </Text>
+        </View>
+      ) : messages.length === 0 ? (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text style={{ color: "#999" }}>Chưa có tin nhắn nào</Text>
+        </View>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ padding: 15 }}
+          onContentSizeChange={() => {
+            // Auto scroll khi content size thay đổi
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }}
+          renderItem={({ item }) => (
             <View
               style={[
-                styles.bubble,
-                item.type === "sent" ? styles.bubbleRight : styles.bubbleLeft,
+                styles.messageRow,
+                item.type === "sent" && { justifyContent: "flex-end" },
               ]}
             >
-              {item.sender && (
-                <Text style={styles.senderName}>{item.sender}</Text>
+              {/* On left message: show avatar */}
+              {item.type === "received" && (
+                <Image
+                  source={{ uri: "https://i.pravatar.cc/150?img=47" }}
+                  style={styles.smallAvatar}
+                />
               )}
 
-              {item.message && (
-                <Text style={styles.messageText}>{item.message}</Text>
-              )}
+              <View
+                style={[
+                  styles.bubble,
+                  item.type === "sent" ? styles.bubbleRight : styles.bubbleLeft,
+                ]}
+              >
+                {item.message && (
+                  <Text style={styles.messageText}>{item.message}</Text>
+                )}
 
-              {/* Images grid */}
-              {/* {item.images?.length > 0 && (
-                <View style={styles.imageGrid}>
-                  {item.images.map((img, index) => (
-                    <Image key={index} source={{ uri: img }} style={styles.chatImage} />
-                  ))}
-                </View>
-              )} */}
+                <Text style={styles.time}>{item.time}</Text>
 
-              <Text style={styles.time}>{item.time}</Text>
-
-              {item.status && (
-                <Text style={styles.statusText}>{item.status}</Text>
-              )}
+                {item.status && (
+                  <Text style={styles.statusText}>{item.status}</Text>
+                )}
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      )}
 
       {showEmoji && (
         <View style={styles.emojiBox}>
@@ -206,10 +301,23 @@ export default function MessageDetailPage({ navigation }: any) {
           color="#999"
           style={{ marginHorizontal: 10 }}
         />
-        <TouchableOpacity style={styles.sendBtn}>
-          <Ionicons name="send" size={22} color="#fff" />
+        <TouchableOpacity
+          style={styles.sendBtn}
+          disabled={sending || !text.trim()}
+          onPress={handleSendMessage}
+        >
+          {sending ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="send" size={22} color="#fff" />
+          )}
         </TouchableOpacity>
       </View>
+      <Noti
+        message={noti.message}
+        onDismissSnackBar={onDismissSnackBar}
+        type={noti.type}
+      />
     </View>
   );
 }
@@ -278,7 +386,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontSize: 13,
   },
-
   messageText: {
     color: "#333",
     fontSize: 15,

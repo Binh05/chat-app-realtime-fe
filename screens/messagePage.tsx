@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
   StyleSheet,
@@ -8,74 +8,40 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { StackNavigationProp } from "@react-navigation/stack";
+import { useFocusEffect } from "@react-navigation/native";
 
 import NotificationDropdown from "../components/ui/notification";
 import TaskBar from "../components/TaskBar";
 import { useRoute } from "@react-navigation/native";
+import { useContextSelector } from "use-context-selector";
+import { FriendContext } from "../contexts/FriendContext";
+import { SocketContext } from "../contexts/socketContext";
+import { ChatContext } from "../contexts/chatContext";
+import { UserContext } from "../contexts/UserContext";
+import { useFetchConversations } from "../hooks/useFetchConversations";
+import { useFetchFriends } from "../hooks/useFetchFriends";
+import {
+  findOtherParticipant,
+  convertConversationToChatItem,
+  isValidConversation,
+} from "../utils/conversationHelper";
 
 type Props = {
   navigation: StackNavigationProp<any>;
 };
 
 export default function MessagePage({ navigation }: Props) {
-  const onlineUsers = [
-    { id: 1, name: "Christopher", img: "https://i.pravatar.cc/150?img=12" },
-    { id: 2, name: "Reese", img: "https://i.pravatar.cc/150?img=32" },
-    { id: 3, name: "Jeffrey", img: "https://i.pravatar.cc/150?img=28" },
-    { id: 4, name: "Laura", img: "https://i.pravatar.cc/150?img=15" },
-    { id: 5, name: "Maldonado", img: "https://i.pravatar.cc/150?img=48" },
-  ];
-
-  const messages = [
-    {
-      id: 1,
-      name: "Ellen Lambert",
-      message: "Hey! How's it going?",
-      time: "04:04AM",
-      img: "https://i.pravatar.cc/150?img=47",
-      badge: 3,
-    },
-    {
-      id: 2,
-      name: "Connor Frazier",
-      message: "What kind of music do you like?",
-      time: "08:58PM",
-      img: "https://i.pravatar.cc/150?img=34",
-      badge: 1,
-    },
-    {
-      id: 3,
-      name: "Josephine Gordon",
-      message: "Sounds good to me!",
-      time: "11:33PM",
-      img: "https://i.pravatar.cc/150?img=26",
-      badge: 0,
-    },
-  ];
-
   const [currentTab, setCurrentTab] = useState("messages");
   const [searchText, setSearchText] = useState("");
-
   const [createGroupVisible, setCreateGroupVisible] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [groupName, setGroupName] = useState("");
   const [groups, setGroups] = useState<any[]>([]);
-
-  const chatList = [
-    ...groups.map((g) => ({ type: "group", ...g })),
-    ...messages.map((m) => ({ type: "private", ...m })),
-  ];
-
-  // Lọc theo tên
-  const filteredChats = useMemo(() => {
-    return chatList.filter((c) =>
-      c.name.toLowerCase().includes(searchText.toLowerCase())
-    );
-  }, [searchText]);
 
   const route = useRoute();
   const routeToKey: Record<string, string> = {
@@ -84,6 +50,118 @@ export default function MessagePage({ navigation }: Props) {
     Contacts: "contacts",
     Profile: "profile",
   };
+
+  // Fetch conversations with hook
+  const {
+    conversations = [],
+    isLoaded,
+    loading: conversationLoading,
+    error: conversationError,
+    refetch: refetchConversations,
+  } = useFetchConversations({
+    autoFetch: true,
+  });
+
+  // Fetch friends with online status
+  const {
+    onlineFriends,
+    isFriendOnline,
+    refetch: refetchFriends,
+  } = useFetchFriends({
+    autoFetch: true,
+  });
+
+  // Refetch friends và conversations mỗi khi vô trang này
+  useFocusEffect(
+    React.useCallback(() => {
+      refetchFriends();
+      refetchConversations();
+    }, [refetchFriends, refetchConversations])
+  );
+
+  // Get socket state for online indicator
+  const { state: socketState } = useContextSelector(SocketContext, (v) => v);
+
+  // Get current user info
+  const { state: userState } = useContextSelector(UserContext, (v) => v);
+
+  // Filter online users from friends list
+  const onlineList = useMemo(() => {
+    return onlineFriends.map((friend: any) => ({
+      _id: friend._id,
+      username: friend.username,
+      avatarUrl: friend.avatarUrl || "https://i.pravatar.cc/100",
+    }));
+  }, [onlineFriends]);
+
+  // Combine conversations with online status
+  const chatList = useMemo(() => {
+    // Phòng thủ: kiểm tra conversations có dữ liệu
+    if (!Array.isArray(conversations) || conversations.length === 0) {
+      return groups;
+    }
+
+    const directConversations = conversations
+      .filter((convo: any) => {
+        // Kiểm tra conversation có hợp lệ
+        if (!isValidConversation(convo)) {
+          console.warn("❌ Invalid conversation:", convo._id);
+          return false;
+        }
+
+        // Phòng thủ: kiểm tra type của conversation
+        if (convo.type && convo.type !== "direct") {
+          return false;
+        }
+
+        return true;
+      })
+      .map((convo: any) => {
+        // Sử dụng helper function để chuyển đổi conversation
+        const chatItem = convertConversationToChatItem(
+          convo,
+          userState._id,
+          isFriendOnline
+        );
+
+        if (chatItem) {
+        } else {
+          console.warn("❌ Failed to convert conversation:", convo._id);
+        }
+
+        return chatItem;
+      })
+      .filter((item: any) => item !== null); // Loại bỏ null items
+
+    const finalList = [...groups, ...directConversations];
+
+    return finalList;
+  }, [conversations, groups, userState._id, isFriendOnline]);
+
+  // Filter chats by search text
+  const filteredChats = useMemo(() => {
+    return chatList.filter((c: any) => {
+      // Phòng thủ: kiểm tra c là object hợp lệ
+      if (!c) return false;
+
+      if (c.type === "group") {
+        return (
+          c.name?.toLowerCase().includes(searchText.toLowerCase()) ?? false
+        );
+      }
+
+      // Cho direct chat: so sánh với name (đã được set từ otherParticipant.username)
+      return c.name?.toLowerCase().includes(searchText.toLowerCase()) ?? false;
+    });
+  }, [searchText, chatList]);
+
+  // Debug logging
+  useEffect(() => {
+    if (userState._id && conversations.length > 0) {
+      if (chatList.length > 0) {
+      }
+    }
+  }, [userState._id, conversations.length, chatList.length]);
 
   return (
     <View style={styles.container}>
@@ -124,7 +202,7 @@ export default function MessagePage({ navigation }: Props) {
       {/* ========== ONLINE USERS ========== */}
       <Text style={styles.title}>ONLINE USERS</Text>
       <FlatList
-        data={onlineUsers}
+        data={onlineList}
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.flatList_1}
@@ -135,10 +213,13 @@ export default function MessagePage({ navigation }: Props) {
             onPress={() => navigation.navigate("Detail", { user: item })}
           >
             <View>
-              <Image source={{ uri: item.img }} style={styles.onlineAvatar} />
+              <Image
+                source={{ uri: item.avatarUrl }}
+                style={styles.onlineAvatar}
+              />
               <View style={styles.onlineDot} />
             </View>
-            <Text style={styles.onlineName}>{item.name}</Text>
+            <Text style={styles.onlineName}>{item.username}</Text>
           </TouchableOpacity>
         )}
       />
@@ -146,29 +227,84 @@ export default function MessagePage({ navigation }: Props) {
       {/* ========== CHATS ========== */}
       <Text style={styles.title}>CHATS</Text>
 
-      <FlatList
-        data={chatList}
-        keyExtractor={(item) => item.id.toString()}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => {
-          if (item.type === "group") {
+      {conversationLoading && !chatList.length ? (
+        <View style={{ padding: 20, alignItems: "center" }}>
+          <ActivityIndicator size="large" color="#3498db" />
+          <Text style={{ marginTop: 10, color: "#999" }}>
+            Đang tải cuộc trò chuyện...
+          </Text>
+        </View>
+      ) : chatList.length === 0 ? (
+        <View style={{ padding: 20, alignItems: "center" }}>
+          <Text style={{ color: "#999" }}>Chưa có cuộc trò chuyện nào</Text>
+          <Text style={{ color: "#999", fontSize: 12, marginTop: 5 }}>
+            Hãy kết bạn để bắt đầu chat
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={chatList}
+          keyExtractor={(item, index) => item?._id || `chat-${index}`}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => {
+            if (item.type === "group") {
+              return (
+                <TouchableOpacity
+                  style={styles.messageContainer}
+                  onPress={() => navigation.navigate("GroupChat", item)}
+                >
+                  <View style={styles.groupAvatarWrapper}>
+                    <Image
+                      source={{ uri: item.members[0].img }}
+                      style={styles.groupAvatar}
+                    />
+                    {item.members[1] && (
+                      <Image
+                        source={{ uri: item.members[1].img }}
+                        style={[styles.groupAvatar, styles.groupAvatar2]}
+                      />
+                    )}
+                  </View>
+
+                  <View style={styles.messageContent}>
+                    <View style={styles.rowBetween}>
+                      <Text style={styles.name}>{item.name}</Text>
+                      <Text style={styles.time}>{item.time}</Text>
+                    </View>
+
+                    <Text style={styles.messageText}>{item.lastMessage}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }
+
+            // ===== PRIVATE CHAT =====
             return (
               <TouchableOpacity
                 style={styles.messageContainer}
-                onPress={() => navigation.navigate("GroupChat", item)}
+                onPress={() =>
+                  // Truyền đúng params cho màn Detail/Chat
+                  navigation.navigate("Detail", {
+                    conversationId: item._id, // ID cuộc trò chuyện
+                    user: item.otherUser, // Object user kia (để lấy tên/avatar header)
+                  })
+                }
               >
-                <View style={styles.groupAvatarWrapper}>
+                <View style={{ position: "relative" }}>
                   <Image
-                    source={{ uri: item.members[0].img }}
-                    style={styles.groupAvatar}
+                    source={{ uri: item.img }}
+                    style={styles.messageAvatar}
                   />
-                  {item.members[1] && (
-                    <Image
-                      source={{ uri: item.members[1].img }}
-                      style={[styles.groupAvatar, styles.groupAvatar2]}
-                    />
-                  )}
+                  {/* Online indicator */}
+                  {item.isOnline && <View style={styles.onlineIndicator} />}
                 </View>
+
+                {/* Badge logic: chỉ hiện nếu > 0 */}
+                {item.badge > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{item.badge}</Text>
+                  </View>
+                )}
 
                 <View style={styles.messageContent}>
                   <View style={styles.rowBetween}>
@@ -176,37 +312,23 @@ export default function MessagePage({ navigation }: Props) {
                     <Text style={styles.time}>{item.time}</Text>
                   </View>
 
-                  <Text style={styles.messageText}>{item.lastMessage}</Text>
+                  {/* Thêm style logic để in đậm nếu chưa đọc */}
+                  <Text
+                    style={[
+                      styles.messageText,
+                      item.badge > 0 && { fontWeight: "bold", color: "#000" },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {/* Helper đã xử lý logic text tin nhắn */}
+                    {item.message}
+                  </Text>
                 </View>
               </TouchableOpacity>
             );
-          }
-
-          // ===== PRIVATE CHAT =====
-          return (
-            <TouchableOpacity
-              style={styles.messageContainer}
-              onPress={() => navigation.navigate("Detail")}
-            >
-              <Image source={{ uri: item.img }} style={styles.messageAvatar} />
-
-              {item.badge > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{item.badge}</Text>
-                </View>
-              )}
-
-              <View style={styles.messageContent}>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={styles.time}>{item.time}</Text>
-                </View>
-                <Text style={styles.messageText}>{item.message}</Text>
-              </View>
-            </TouchableOpacity>
-          );
-        }}
-      />
+          }}
+        />
+      )}
 
       {/* ========== CREATE GROUP MODAL ========== */}
       {createGroupVisible && (
@@ -229,7 +351,7 @@ export default function MessagePage({ navigation }: Props) {
             </Text>
 
             <FlatList
-              data={onlineUsers}
+              data={onlineList}
               style={{ maxHeight: 150 }}
               renderItem={({ item }) => {
                 const isSelected = selectedUsers.includes(item.id);
@@ -286,8 +408,8 @@ export default function MessagePage({ navigation }: Props) {
                   const newGroup = {
                     id: Date.now().toString(),
                     name: groupName,
-                    members: onlineUsers.filter((u) =>
-                      selectedUsers.includes(u.id)
+                    members: onlineList.filter((u: any) =>
+                      selectedUsers.includes(u._id)
                     ),
                     lastMessage: "Group created",
                     time: "Now",
@@ -426,6 +548,18 @@ const styles = StyleSheet.create({
     width: 65,
     height: 65,
     borderRadius: 50,
+  },
+
+  onlineIndicator: {
+    width: 14,
+    height: 14,
+    backgroundColor: "#2ecc71",
+    borderRadius: 50,
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    borderWidth: 2,
+    borderColor: "#fff",
   },
 
   badge: {

@@ -4,16 +4,21 @@ import { Snackbar } from "react-native-paper";
 function Noti({
   message,
   onDismissSnackBar,
+  type = "success",
 }: {
-  message: string;
+  message: string | null;
   onDismissSnackBar: () => void;
+  type?: "success" | "error";
 }) {
   return (
     <Snackbar
       visible={!!message}
       onDismiss={onDismissSnackBar}
       duration={3000}
-      style={[styles.snackbar, { backgroundColor: "#5cb85c" }]}
+      style={[
+        styles.snackbar,
+        { backgroundColor: type === "success" ? "#5cb85c" : "#FF4444" },
+      ]}
     >
       <Text>{message}</Text>
     </Snackbar>

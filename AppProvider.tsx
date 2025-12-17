@@ -1,11 +1,17 @@
 import React from "react";
 import { UserProvider } from "./contexts/UserContext";
+import { ChatProvider } from "./contexts/chatContext";
 import { FriendProvider } from "./contexts/FriendContext";
+import { SocketProvider } from "./contexts/socketContext";
 
 function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
-      <FriendProvider>{children}</FriendProvider>
+      <SocketProvider>
+        <FriendProvider>
+          <ChatProvider>{children}</ChatProvider>
+        </FriendProvider>
+      </SocketProvider>
     </UserProvider>
   );
 }
