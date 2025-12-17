@@ -51,7 +51,6 @@ export default function TaskBar({
       </View>
 
       {/* underline */}
-      <View style={styles.underline} />
     </View>
   );
 }

@@ -9,7 +9,7 @@ function LoadingInit({
   height?: number | "auto" | "100%";
 }) {
   return (
-    <View style={{ width, height }}>
+    <View style={{ width: "100%", height }}>
       <ActivityIndicator
         style={{
           top: "50%",

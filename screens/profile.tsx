@@ -12,10 +12,13 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import TaskBar from "../components/TaskBar";
 import { useRoute } from "@react-navigation/native";
+import { useContextSelector } from "use-context-selector";
+import { UserContext } from "../contexts/UserContext";
 
 const { width } = Dimensions.get("window");
 
 const ProfileScreen = ({ navigation }: { navigation: any }) => {
+  const user = useContextSelector(UserContext, (v) => v.state);
   const [currentTab, setCurrentTab] = useState("profile");
   const route = useRoute();
   const routeToKey: Record<string, string> = {
@@ -67,7 +70,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
 
           {/* User Info */}
           <View style={styles.infoSection}>
-            <Text style={styles.name}>Nameh</Text>
+            <Text style={styles.name}>{user?.username ?? "unknow"}</Text>
             <TouchableOpacity>
               <Text style={styles.bioLink}>Cập nhật giới thiệu bản thân</Text>
             </TouchableOpacity>
