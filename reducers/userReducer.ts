@@ -1,4 +1,5 @@
 export interface UserState {
+  _id?: string;
   username: string | null;
   phone: string | null;
   token: string | null;
@@ -12,6 +13,7 @@ export type UserAction =
   | { type: "__HYDRATE__"; payload: UserState };
 
 export const initialUserState: UserState = {
+  _id: undefined,
   username: null,
   phone: null,
   token: null,

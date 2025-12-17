@@ -211,10 +211,10 @@ export default function DoctorListScreen({ navigation }: Props) {
 
       removeFriend(friendId);
     } catch (error: any) {
-      console.log("Loi khi unfriend", error);
+      console.error("Loi khi unfriend", error);
       setError(error.response?.data?.message || "Đã xảy ra lỗi, hãy thử lại.");
     } finally {
-      setLoading(true);
+      setLoading(false);
     }
   };
 

@@ -47,31 +47,9 @@ export default function LoginScreen({ navigation }: any) {
       });
 
       if (res.status === 200) {
-        console.log("🔍 Backend trả về:", res.data);
+        const { accessToken, _id, username, phone, avatarUrl } = res.data;
 
-        const { username, phone, avatarUrl } = res.data;
-        
-        const validToken = res.data.accessToken || res.data.token;
-
-        if (!validToken) {
-          console.error("❌ Lỗi: Backend không trả về token hợp lệ");
-          setError("Lỗi hệ thống: Không nhận được mã xác thực.");
-          setLoading(false);
-          return;
-        }
-
-        const userData = {
-          username,
-          phone,
-          token: validToken,
-          avatarUrl
-        };
-
-        console.log("💾 Đang lưu userData:", userData);
-
-        setUser(userData);
-
-        await AsyncStorage.setItem("USER_STATE", JSON.stringify(userData));
+        setUser({ _id, username, phone, token: accessToken, avatarUrl });
 
         setLoading(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

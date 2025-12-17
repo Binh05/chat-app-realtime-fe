@@ -20,11 +20,26 @@ import { useContextSelector } from "use-context-selector";
 import { UserContext } from "./contexts/UserContext";
 import SettingScreen from "./screens/setting";
 import { CreatePostProfile } from "./screens/createPostProfile";
-import EditProfile from "./screens/editProfile"
+import { SocketContext } from "./contexts/socketContext";
+import EditProfile from "./screens/editProfile";
 const Stack = createStackNavigator();
 
 function AppContent() {
-  const user = useContextSelector(UserContext, (v) => v.state);
+  const { token } = useContextSelector(UserContext, (v) => v.state);
+  const { connectSocket, disconnectSocket } = useContextSelector(
+    SocketContext,
+    (v) => v
+  );
+
+  React.useEffect(() => {
+    if (!token) return;
+    if (token) {
+      connectSocket(token);
+    }
+
+    return () => disconnectSocket();
+  }, [token]);
+
   return (
     <PaperProvider>
       {/* <<< THÊM DÒNG NÀY */}
@@ -33,7 +48,7 @@ function AppContent() {
           initialRouteName="Login"
           screenOptions={{ headerShown: false }}
         >
-          {user?.token ? (
+          {token ? (
             <>
               <Stack.Screen name="Message" component={MessageScreen} />
               <Stack.Screen name="Detail" component={DetailChat} />
