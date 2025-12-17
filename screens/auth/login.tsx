@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Loading from "../../components/ui/loading";
@@ -16,14 +17,16 @@ import { api } from "../../utils/api";
 import { Snackbar } from "react-native-paper";
 import { useContextSelector } from "use-context-selector";
 import { UserContext } from "../../contexts/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen({ navigation }: any) {
   const setUser = useContextSelector(UserContext, (v) => v.setUser);
+  
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
   const handleLogin = async () => {
@@ -34,6 +37,7 @@ export default function LoginScreen({ navigation }: any) {
     }
 
     setError(null);
+    Keyboard.dismiss();
 
     try {
       setLoading(true);
@@ -43,17 +47,43 @@ export default function LoginScreen({ navigation }: any) {
       });
 
       if (res.status === 200) {
-        const { accessToken, username, phone, avatarUrl } = res.data;
+        console.log("🔍 Backend trả về:", res.data);
 
-        setUser({ username, phone, token: accessToken, avatarUrl });
+        const { username, phone, avatarUrl } = res.data;
+        
+        const validToken = res.data.accessToken || res.data.token;
+
+        if (!validToken) {
+          console.error("❌ Lỗi: Backend không trả về token hợp lệ");
+          setError("Lỗi hệ thống: Không nhận được mã xác thực.");
+          setLoading(false);
+          return;
+        }
+
+        const userData = {
+          username,
+          phone,
+          token: validToken,
+          avatarUrl
+        };
+
+        console.log("💾 Đang lưu userData:", userData);
+
+        setUser(userData);
+
+        await AsyncStorage.setItem("USER_STATE", JSON.stringify(userData));
 
         setLoading(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        navigation.replace("Message");
+
+        navigation.replace("Home"); 
       }
     } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.message || "Đã xảy ra lỗi. Hãy thử lại.");
+      console.error("Lỗi đăng nhập:", err);
+
+      const serverMessage = err.response?.data?.message;
+      setError(serverMessage || "Đăng nhập thất bại. Vui lòng thử lại.");
+      
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
@@ -63,8 +93,9 @@ export default function LoginScreen({ navigation }: any) {
   const onDismissSnackBar = () => setError(null);
 
   return (
-    <SafeAreaView style={[styles.container, { position: "relative" }]}>
+    <SafeAreaView style={styles.container}>
       {loading && <Loading />}
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -72,6 +103,7 @@ export default function LoginScreen({ navigation }: any) {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* --- HEADER --- */}
           <View style={styles.headerContainer}>
@@ -119,11 +151,15 @@ export default function LoginScreen({ navigation }: any) {
             </TouchableOpacity>
 
             {/* Sign in Button */}
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <TouchableOpacity 
+                style={styles.loginButton} 
+                onPress={handleLogin}
+                disabled={loading}
+            >
               <Text style={styles.loginButtonText}>Sign in</Text>
             </TouchableOpacity>
 
-            {/* Link đăng ký (Create new account) */}
+            {/* Link đăng ký */}
             <TouchableOpacity
               style={styles.registerLink}
               onPress={() => navigation.navigate("Register")}
@@ -133,13 +169,14 @@ export default function LoginScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
         </ScrollView>
+
         <Snackbar
           visible={!!error}
           onDismiss={onDismissSnackBar}
           duration={3000}
           style={[styles.snackbar, { backgroundColor: "#FF4444" }]}
         >
-          <Text>{error}</Text>
+          <Text style={{color: '#fff'}}>{error}</Text>
         </Snackbar>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -147,10 +184,10 @@ export default function LoginScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  snackbar: {},
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    position: "relative"
   },
   scrollContent: {
     flexGrow: 1,
@@ -158,7 +195,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 20,
   },
-
   // Header Styles
   headerContainer: {
     alignItems: "center",
@@ -177,7 +213,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     maxWidth: "80%",
   },
-
   // Form Styles
   formContainer: {
     width: "100%",
@@ -190,21 +225,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "transparent", // Mặc định không viền
+    borderColor: "transparent",
   },
   inputFocused: {
-    borderColor: "#1F41BB", // Khi focus thì viền xanh
+    borderColor: "#1F41BB",
     backgroundColor: "#fff",
     shadowColor: "#1F41BB",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 5, // Đổ bóng cho Android
+    elevation: 5,
   },
-
   // Forgot Password
   forgotButton: {
-    alignSelf: "flex-end", // Căn phải
+    alignSelf: "flex-end",
     marginBottom: 30,
   },
   forgotText: {
@@ -212,7 +246,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-
   // Login Button
   loginButton: {
     backgroundColor: "#1F41BB",
@@ -230,7 +263,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
   },
-
   // Register Link
   registerLink: {
     marginTop: 30,
@@ -240,5 +272,10 @@ const styles = StyleSheet.create({
     color: "#494949",
     fontSize: 14,
     fontWeight: "600",
+  },
+  snackbar: {
+    marginBottom: 20,
+    marginHorizontal: 16,
+    borderRadius: 8,
   },
 });

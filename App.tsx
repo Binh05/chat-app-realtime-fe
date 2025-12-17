@@ -2,10 +2,8 @@ import * as React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
-// Import Provider của react-native-paper
 import { Provider as PaperProvider } from "react-native-paper";
 
-// Screens
 import LoginScreen from "./screens/auth/login";
 import RegisterScreen from "./screens/auth/register";
 import HomeScreen from "./screens/home";
@@ -22,6 +20,7 @@ import { useContextSelector } from "use-context-selector";
 import { UserContext } from "./contexts/UserContext";
 import SettingScreen from "./screens/setting";
 import { CreatePostProfile } from "./screens/createPostProfile";
+import EditProfile from "./screens/editProfile"
 const Stack = createStackNavigator();
 
 function AppContent() {
@@ -46,6 +45,7 @@ function AppContent() {
               <Stack.Screen name="GroupInfo" component={GroupInfoPage} />
               <Stack.Screen name="Setting" component={SettingScreen} />
               <Stack.Screen name="Profile" component={ProfileScreen} />
+              <Stack.Screen name="EditProfile" component={EditProfile} />
               <Stack.Screen
                 name="CreatePostProfile"
                 component={CreatePostProfile}

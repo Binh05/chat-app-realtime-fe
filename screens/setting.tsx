@@ -30,13 +30,12 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
   const clearUser = useContextSelector(UserContext, (v) => v.clearUser);
 
   const navigateToProfile = () => {
-    navigation.navigate("Profile");
+    navigation.navigate("EditProfile");
   };
 
-  // --- MỚI: Hàm quay về màn hình Home ---
   const navigateToHome = () => {
     navigation.navigate("Home");
-    // Hoặc dùng navigation.goBack() nếu muốn quay lại trang trước đó bất kỳ
+
   };
 
   const handlePressPlaceholder = (featureName: string) => {
@@ -86,7 +85,6 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        {/* --- ĐÃ SỬA: Nút Home có thể bấm được --- */}
         <TouchableOpacity style={styles.backButton} onPress={navigateToHome}>
           <Ionicons
             name="arrow-back"

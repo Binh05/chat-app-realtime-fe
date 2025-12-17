@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react'; // Thêm useState
+import React, { useState } from 'react';
 import {
   FlatList,
   Image,
@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import TaskBar from '../components/TaskBar'; // Thêm import TaskBar
+import TaskBar from '../components/TaskBar';
 
 const POSTS = [
   {
@@ -132,7 +132,7 @@ const PostItem = ({ item }: { item: any }) => (
 );
 
 export default function HomeScreen( { navigation }: any ) {
-  const [currentTab, setCurrentTab] = useState('home'); // State cho TaskBar
+  const [currentTab, setCurrentTab] = useState('home');
 
   return (
     <View style={{ flex: 1 }}>
@@ -175,7 +175,6 @@ export default function HomeScreen( { navigation }: any ) {
               onChange={(key) => {
                 setCurrentTab(key);
       
-                // điều hướng theo key
                 if (key === "home") navigation.navigate("Home");
                 if (key === "messages") navigation.navigate("Message");
                 if (key === "contacts") navigation.navigate("Contacts");
@@ -191,7 +190,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0,
-    paddingBottom: 70, // Thêm padding cho TaskBar
+    paddingBottom: 70,
   },
   
   header: {
