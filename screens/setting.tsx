@@ -12,7 +12,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../utils/api";
-import * as Haptics from "expo-haptics";
 import { Snackbar } from "react-native-paper";
 import LoadingInit from "../components/ui/loadingInit";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -24,10 +23,12 @@ interface SettingScreenProps {
 }
 
 const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
+  const user = useContextSelector(UserContext, (v) => v.user);
+  const clearUser = useContextSelector(UserContext, (v) => v.clearUser);
+
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const clearUser = useContextSelector(UserContext, (v) => v.clearUser);
 
   const navigateToProfile = () => {
     navigation.navigate("EditProfile");
@@ -35,7 +36,6 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
 
   const navigateToHome = () => {
     navigation.navigate("Home");
-
   };
 
   const handlePressPlaceholder = (featureName: string) => {
@@ -76,6 +76,10 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
       clearUser();
       await AsyncStorage.removeItem("USER_STATE");
       setLoading(false);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
     }
   };
 
@@ -83,7 +87,6 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={navigateToHome}>
           <Ionicons
@@ -104,16 +107,19 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* User Card - Điểm chạm để sang Profile */}
+        {/* User Card - HIỂN THỊ DỮ LIỆU ĐỘNG TỪ BIẾN USER */}
         <TouchableOpacity style={styles.userCard} onPress={navigateToProfile}>
           <Image
-            source={{ uri: "https://i.pravatar.cc/150?img=5" }}
+            source={{ uri: user?.avatarUrl || "https://i.pravatar.cc/150?img=5" }}
             style={styles.avatar}
           />
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>Adina Nurrahma</Text>
-            <Text style={styles.userBio}>
-              Trust your feelings, be a good human being.
+            {/* Tên hiển thị động */}
+            <Text style={styles.userName}>{user?.username || "Người dùng"}</Text>
+            
+            {/* Bio động */}
+            <Text style={styles.userBio} numberOfLines={1}>
+              {user?.bio || "Chưa có giới thiệu bản thân..."}
             </Text>
           </View>
           <View style={styles.arrowContainer}>
@@ -121,7 +127,6 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
           </View>
         </TouchableOpacity>
 
-        {/* Section Title */}
         <View style={styles.sectionHeader}>
           <Ionicons
             name="settings-outline"
@@ -132,7 +137,7 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Cài đặt chung</Text>
         </View>
 
-        {/* Group 1: Tài khoản */}
+        {/* Group 1 */}
         <View style={styles.groupContainer}>
           <SettingItem
             icon="chatbox-ellipses-outline"
@@ -147,7 +152,7 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
           />
         </View>
 
-        {/* Group 2: Hệ thống */}
+        {/* Group 2 */}
         <View style={styles.groupContainer}>
           <SettingItem
             icon="create-outline"
@@ -177,7 +182,7 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
           />
         </View>
 
-        {/* Group 3: Bảo mật & Giao diện */}
+        {/* Group 3 */}
         <View style={styles.groupContainer}>
           <SettingItem
             icon="shield-checkmark-outline"
@@ -192,7 +197,7 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
           />
         </View>
 
-        {/* Group 4: Hỗ trợ */}
+        {/* Group 4 */}
         <View style={styles.groupContainer}>
           <SettingItem
             icon="help-circle-outline"
@@ -229,7 +234,7 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
           duration={3000}
           style={[styles.snackbar, { backgroundColor: "#FF4444" }]}
         >
-          <Text>{error}</Text>
+          <Text style={{color: '#fff'}}>{error}</Text>
         </Snackbar>
       </ScrollView>
     </SafeAreaView>
@@ -237,141 +242,28 @@ const SettingScreen: React.FC<SettingScreenProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  snackbar: {
-    marginBottom: 20,
-    marginHorizontal: 16,
-    borderRadius: 8,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "#F2F4F8",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: "#fff",
-    marginBottom: 10,
-  },
-  // --- MỚI: Style cho nút Home ---
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#0077B6",
-  },
-  searchBtn: {
-    padding: 5,
-    backgroundColor: "#F0F0F0",
-    borderRadius: 20,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-
-  userCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 15,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: "#00B4D8",
-  },
-  userInfo: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#0077B6",
-  },
-  userBio: {
-    fontSize: 13,
-    color: "#6c757d",
-    marginTop: 4,
-  },
-  arrowContainer: {
-    backgroundColor: "#00B4D8",
-    padding: 5,
-    borderRadius: 15,
-  },
-
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-    marginTop: 5,
-    paddingLeft: 5,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-  },
-
-  groupContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    elevation: 1,
-  },
-  rowItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-  },
-  rowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  label: {
-    marginLeft: 15,
-    fontSize: 15,
-    color: "#333",
-    fontWeight: "500",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#F0F0F0",
-    marginLeft: 37,
-  },
-
-  logoutButton: {
-    marginTop: 10,
-    backgroundColor: "#FFE5E5",
-    padding: 15,
-    borderRadius: 16,
-    alignItems: "center",
-  },
-  logoutText: {
-    color: "#FF4757",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
+  snackbar: { marginBottom: 20, marginHorizontal: 16, borderRadius: 8 },
+  container: { flex: 1, backgroundColor: "#F2F4F8" },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 20, backgroundColor: "#fff", marginBottom: 10 },
+  backButton: { flexDirection: "row", alignItems: "center" },
+  headerTitle: { fontSize: 26, fontWeight: "bold", color: "#0077B6" },
+  searchBtn: { padding: 5, backgroundColor: "#F0F0F0", borderRadius: 20 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
+  userCard: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 20, padding: 15, marginBottom: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  avatar: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: "#00B4D8" },
+  userInfo: { flex: 1, marginLeft: 15 },
+  userName: { fontSize: 18, fontWeight: "bold", color: "#0077B6" },
+  userBio: { fontSize: 13, color: "#6c757d", marginTop: 4 },
+  arrowContainer: { backgroundColor: "#00B4D8", padding: 5, borderRadius: 15 },
+  sectionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10, marginTop: 5, paddingLeft: 5 },
+  sectionTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
+  groupContainer: { backgroundColor: "#fff", borderRadius: 16, marginBottom: 15, paddingHorizontal: 15, paddingVertical: 5, shadowColor: "#000", shadowOpacity: 0.03, shadowRadius: 5, elevation: 1 },
+  rowItem: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 16 },
+  rowLeft: { flexDirection: "row", alignItems: "center" },
+  label: { marginLeft: 15, fontSize: 15, color: "#333", fontWeight: "500" },
+  divider: { height: 1, backgroundColor: "#F0F0F0", marginLeft: 37 },
+  logoutButton: { marginTop: 10, backgroundColor: "#FFE5E5", padding: 15, borderRadius: 16, alignItems: "center" },
+  logoutText: { color: "#FF4757", fontWeight: "bold", fontSize: 16 },
 });
 
 export default SettingScreen;
