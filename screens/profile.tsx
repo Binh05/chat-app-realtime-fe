@@ -63,7 +63,11 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
           {/* Avatar (Floating) */}
           <View style={styles.avatarContainer}>
             <Image
-              source={{ uri: "https://i.pravatar.cc/150?img=5" }}
+              source={{
+                uri:
+                  user?.avatarUrl ??
+                  "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
+              }}
               style={styles.avatar}
             />
           </View>

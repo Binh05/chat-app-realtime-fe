@@ -71,12 +71,14 @@ export default function MessagePage({ navigation }: Props) {
     autoFetch: true,
   });
 
-  // Refetch friends và conversations mỗi khi vô trang này
+  // Refetch friends và conversations mỗi khi vô trang này - chỉ refetch nếu chưa load
   useFocusEffect(
     React.useCallback(() => {
-      refetchFriends();
-      refetchConversations();
-    }, [refetchFriends, refetchConversations])
+      if (!isLoaded) {
+        refetchConversations();
+        refetchFriends();
+      }
+    }, [isLoaded, refetchFriends, refetchConversations])
   );
 
   // Get socket state for online indicator
@@ -90,7 +92,9 @@ export default function MessagePage({ navigation }: Props) {
     return onlineFriends.map((friend: any) => ({
       _id: friend._id,
       username: friend.username,
-      avatarUrl: friend.avatarUrl || "https://i.pravatar.cc/100",
+      avatarUrl:
+        friend.avatarUrl ||
+        "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
     }));
   }, [onlineFriends]);
 
@@ -105,7 +109,7 @@ export default function MessagePage({ navigation }: Props) {
       .filter((convo: any) => {
         // Kiểm tra conversation có hợp lệ
         if (!isValidConversation(convo)) {
-          console.warn("❌ Invalid conversation:", convo._id);
+          console.warn("Invalid conversation:", convo._id);
           return false;
         }
 
@@ -126,7 +130,7 @@ export default function MessagePage({ navigation }: Props) {
 
         if (chatItem) {
         } else {
-          console.warn("❌ Failed to convert conversation:", convo._id);
+          console.warn("Failed to convert conversation:", convo._id);
         }
 
         return chatItem;
@@ -169,7 +173,11 @@ export default function MessagePage({ navigation }: Props) {
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Image
-            source={{ uri: "https://i.pravatar.cc/100?img=5" }}
+            source={{
+              uri:
+                userState?.avatarUrl ??
+                "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
+            }}
             style={styles.headerAvatar}
           />
         </TouchableOpacity>
@@ -199,72 +207,124 @@ export default function MessagePage({ navigation }: Props) {
         </View>
       </View>
 
-      {/* ========== ONLINE USERS ========== */}
-      <Text style={styles.title}>ONLINE USERS</Text>
-      <FlatList
-        data={onlineList}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.flatList_1}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            activeOpacity={0.7}
-            style={styles.onlineUser}
-            onPress={() => navigation.navigate("Detail", { user: item })}
-          >
-            <View>
-              <Image
-                source={{ uri: item.avatarUrl }}
-                style={styles.onlineAvatar}
-              />
-              <View style={styles.onlineDot} />
-            </View>
-            <Text style={styles.onlineName}>{item.username}</Text>
-          </TouchableOpacity>
-        )}
-      />
-
-      {/* ========== CHATS ========== */}
-      <Text style={styles.title}>CHATS</Text>
-
-      {conversationLoading && !chatList.length ? (
-        <View style={{ padding: 20, alignItems: "center" }}>
-          <ActivityIndicator size="large" color="#3498db" />
-          <Text style={{ marginTop: 10, color: "#999" }}>
-            Đang tải cuộc trò chuyện...
-          </Text>
-        </View>
-      ) : chatList.length === 0 ? (
-        <View style={{ padding: 20, alignItems: "center" }}>
-          <Text style={{ color: "#999" }}>Chưa có cuộc trò chuyện nào</Text>
-          <Text style={{ color: "#999", fontSize: 12, marginTop: 5 }}>
-            Hãy kết bạn để bắt đầu chat
-          </Text>
-        </View>
-      ) : (
+      {/* Scrollable Content */}
+      <View style={styles.contentContainer}>
+        {/* ========== ONLINE USERS ========== */}
+        <Text style={styles.title}>ONLINE USERS</Text>
         <FlatList
-          data={chatList}
-          keyExtractor={(item, index) => item?._id || `chat-${index}`}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => {
-            if (item.type === "group") {
+          data={onlineList}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          scrollEnabled={false}
+          style={styles.flatList_1}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.onlineUser}
+              onPress={() => navigation.navigate("Detail", { user: item })}
+            >
+              <View>
+                <Image
+                  source={{
+                    uri:
+                      item?.avatarUrl ??
+                      "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
+                  }}
+                  style={styles.onlineAvatar}
+                />
+                <View style={styles.onlineDot} />
+              </View>
+              <Text style={styles.onlineName}>{item.username}</Text>
+            </TouchableOpacity>
+          )}
+        />
+
+        {/* ========== CHATS ========== */}
+        <Text style={styles.title}>CHATS</Text>
+
+        {conversationLoading && !chatList.length ? (
+          <View style={{ padding: 20, alignItems: "center" }}>
+            <ActivityIndicator size="large" color="#3498db" />
+            <Text style={{ marginTop: 10, color: "#999" }}>
+              Đang tải cuộc trò chuyện...
+            </Text>
+          </View>
+        ) : chatList.length === 0 ? (
+          <View style={{ padding: 20, alignItems: "center" }}>
+            <Text style={{ color: "#999" }}>Chưa có cuộc trò chuyện nào</Text>
+            <Text style={{ color: "#999", fontSize: 12, marginTop: 5 }}>
+              Hãy kết bạn để bắt đầu chat
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={chatList}
+            keyExtractor={(item, index) => item?._id || `chat-${index}`}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={false}
+            renderItem={({ item }) => {
+              if (item.type === "group") {
+                return (
+                  <TouchableOpacity
+                    style={styles.messageContainer}
+                    onPress={() => navigation.navigate("GroupChat", item)}
+                  >
+                    <View style={styles.groupAvatarWrapper}>
+                      <Image
+                        source={{ uri: item.members[0].img }}
+                        style={styles.groupAvatar}
+                      />
+                      {item.members[1] && (
+                        <Image
+                          source={{ uri: item.members[1].img }}
+                          style={[styles.groupAvatar, styles.groupAvatar2]}
+                        />
+                      )}
+                    </View>
+
+                    <View style={styles.messageContent}>
+                      <View style={styles.rowBetween}>
+                        <Text style={styles.name}>{item.name}</Text>
+                        <Text style={styles.time}>{item.time}</Text>
+                      </View>
+
+                      <Text style={styles.messageText}>{item.lastMessage}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }
+
+              // ===== PRIVATE CHAT =====
               return (
                 <TouchableOpacity
                   style={styles.messageContainer}
-                  onPress={() => navigation.navigate("GroupChat", item)}
+                  onPress={() =>
+                    // Truyền đúng params cho màn Detail/Chat
+                    navigation.navigate("Detail", {
+                      conversationId: item._id, // ID cuộc trò chuyện
+                      user: item.otherUser, // Object user kia (để lấy tên/avatar header)
+                    })
+                  }
                 >
-                  <View style={styles.groupAvatarWrapper}>
+                  <View style={{ position: "relative" }}>
                     <Image
-                      source={{ uri: item.members[0].img }}
-                      style={styles.groupAvatar}
+                      source={{
+                        uri:
+                          item.avatarUrl ??
+                          "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
+                      }}
+                      style={styles.messageAvatar}
                     />
-                    {item.members[1] && (
-                      <Image
-                        source={{ uri: item.members[1].img }}
-                        style={[styles.groupAvatar, styles.groupAvatar2]}
-                      />
-                    )}
+                    {/* Online indicator */}
+                    {item.isOnline && <View style={styles.onlineIndicator} />}
                   </View>
+
+                  {/* Badge logic: chỉ hiện nếu > 0 */}
+                  {item.badge > 0 && (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{item.badge}</Text>
+                    </View>
+                  )}
 
                   <View style={styles.messageContent}>
                     <View style={styles.rowBetween}>
@@ -272,63 +332,24 @@ export default function MessagePage({ navigation }: Props) {
                       <Text style={styles.time}>{item.time}</Text>
                     </View>
 
-                    <Text style={styles.messageText}>{item.lastMessage}</Text>
+                    {/* Thêm style logic để in đậm nếu chưa đọc */}
+                    <Text
+                      style={[
+                        styles.messageText,
+                        item.badge > 0 && { fontWeight: "bold", color: "#000" },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {/* Helper đã xử lý logic text tin nhắn */}
+                      {item.message}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               );
-            }
-
-            // ===== PRIVATE CHAT =====
-            return (
-              <TouchableOpacity
-                style={styles.messageContainer}
-                onPress={() =>
-                  // Truyền đúng params cho màn Detail/Chat
-                  navigation.navigate("Detail", {
-                    conversationId: item._id, // ID cuộc trò chuyện
-                    user: item.otherUser, // Object user kia (để lấy tên/avatar header)
-                  })
-                }
-              >
-                <View style={{ position: "relative" }}>
-                  <Image
-                    source={{ uri: item.img }}
-                    style={styles.messageAvatar}
-                  />
-                  {/* Online indicator */}
-                  {item.isOnline && <View style={styles.onlineIndicator} />}
-                </View>
-
-                {/* Badge logic: chỉ hiện nếu > 0 */}
-                {item.badge > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{item.badge}</Text>
-                  </View>
-                )}
-
-                <View style={styles.messageContent}>
-                  <View style={styles.rowBetween}>
-                    <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.time}>{item.time}</Text>
-                  </View>
-
-                  {/* Thêm style logic để in đậm nếu chưa đọc */}
-                  <Text
-                    style={[
-                      styles.messageText,
-                      item.badge > 0 && { fontWeight: "bold", color: "#000" },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {/* Helper đã xử lý logic text tin nhắn */}
-                    {item.message}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      )}
+            }}
+          />
+        )}
+      </View>
 
       {/* ========== CREATE GROUP MODAL ========== */}
       {createGroupVisible && (
@@ -448,9 +469,15 @@ export default function MessagePage({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 45,
     backgroundColor: "#fff",
     flex: 1,
+    paddingTop: 45,
+  },
+
+  contentContainer: {
+    flex: 1,
+    paddingBottom: 70,
+    overflow: "scroll",
   },
 
   title: {

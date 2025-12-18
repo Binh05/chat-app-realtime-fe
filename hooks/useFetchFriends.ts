@@ -44,7 +44,7 @@ export const useFetchFriends = (options: UseFetchFriendsOptions = {}) => {
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || err.message || "Failed to load friends";
-      console.error("❌ Error loading friends:", errorMessage);
+      console.error("Error loading friends:", errorMessage);
       setError(errorMessage);
       onError?.(err);
       setLoading(false);
@@ -68,7 +68,7 @@ export const useFetchFriends = (options: UseFetchFriendsOptions = {}) => {
     if (socketState.friendStatusChanged) {
       loadFriends().catch((e) => console.error(e));
     }
-  }, [socketState.friendStatusChanged, loadFriends]);
+  }, [socketState.friendStatusChanged]);
 
   // Get online friends
   const getOnlineFriends = useCallback(() => {

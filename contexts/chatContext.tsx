@@ -42,8 +42,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     if (!socketState?.socket) return;
 
     socketState.socket.on("new-message", (payload: any) => {
-      console.log("📨 New message received:", payload);
-
       const { message, conversation, unreadCounts } = payload;
 
       // Thêm message vào store
@@ -78,7 +76,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             unreadCounts: unreadCounts,
           },
         });
-        console.log("📌 Updated unreadCounts:", unreadCounts);
       }
     });
 

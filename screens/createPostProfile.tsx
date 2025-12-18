@@ -10,29 +10,30 @@ import {
   Platform,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { useCreateFeed } from "../hooks/useCreateFeed";
 
 export const CreatePostProfile = ({ navigation }: { navigation: any }) => {
   const [postText, setPostText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Hàm chọn ảnh
+  const { createFeed, loading, error } = useCreateFeed();
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== "granted") {
-      Alert.alert("Lỗi", "Cần quyền truy cập thư viện ảnh!");
+      Alert.alert("Lỗi", "Cần quyền truy cập thư viện ảnh");
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+      quality: 0.9,
     });
 
     if (!result.canceled) {
@@ -40,66 +41,64 @@ export const CreatePostProfile = ({ navigation }: { navigation: any }) => {
     }
   };
 
-  const handlePost = () => {
-    console.log("Đăng bài:", postText, selectedImage);
-    // Code gọi API đăng bài ở đây...
-    navigation.goBack();
-  };
-
-  const removeImage = () => {
-    setSelectedImage(null);
+  const handlePost = async () => {
+    try {
+      const res = await createFeed(postText, selectedImage);
+      if (res) {
+        Alert.alert("Thành công", "Đã đăng bài");
+        navigation.goBack();
+      }
+    } catch {
+      Alert.alert("Lỗi", error || "Không thể đăng bài");
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={28} color="#333" />
+          <Ionicons name="close" size={28} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tạo bài viết</Text>
         <TouchableOpacity
+          onPress={handlePost}
+          disabled={loading || (!postText && !selectedImage)}
           style={[
             styles.postButton,
-            { opacity: postText.length > 0 || selectedImage ? 1 : 0.5 },
+            { opacity: loading || (!postText && !selectedImage) ? 0.5 : 1 },
           ]}
-          onPress={handlePost}
-          disabled={postText.length === 0 && !selectedImage}
         >
-          <Text style={styles.postButtonText}>Đăng</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.postButtonText}>Đăng</Text>
+          )}
         </TouchableOpacity>
       </View>
 
-      <View style={styles.divider} />
-
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        {/* User Info */}
-        <View style={styles.userInfoContainer}>
-          <Image
-            source={{ uri: "https://i.pravatar.cc/150?img=5" }}
-            style={styles.avatar}
-          />
-          <View style={styles.userInfoText}>
-            <Text style={styles.userName}>Nameh</Text>
-            <View style={styles.privacyBadge}>
-              <Ionicons name="earth" size={12} color="#666" />
-              <Text style={styles.privacyText}>Công khai</Text>
-            </View>
+      <View style={styles.userInfoContainer}>
+        <Image
+          source={{ uri: "https://i.pravatar.cc/150?img=5" }}
+          style={styles.avatar}
+        />
+        <View style={styles.userInfoText}>
+          <Text style={styles.userName}>Nameh</Text>
+          <View style={styles.privacyBadge}>
+            <Ionicons name="earth" size={12} color="#666" />
+            <Text style={styles.privacyText}>Công khai</Text>
           </View>
         </View>
+      </View>
 
-        {/* Input */}
+      <ScrollView>
         <TextInput
           style={styles.input}
           placeholder="Bạn đang nghĩ gì?"
-          placeholderTextColor="#999"
           multiline
           value={postText}
           onChangeText={setPostText}
-          scrollEnabled={false}
         />
 
-        {/* Image Preview */}
         {selectedImage && (
           <View style={styles.imagePreviewContainer}>
             <Image
@@ -108,7 +107,7 @@ export const CreatePostProfile = ({ navigation }: { navigation: any }) => {
             />
             <TouchableOpacity
               style={styles.removeImageBtn}
-              onPress={removeImage}
+              onPress={() => setSelectedImage(null)}
             >
               <Ionicons name="close-circle" size={30} color="#fff" />
             </TouchableOpacity>
@@ -116,7 +115,6 @@ export const CreatePostProfile = ({ navigation }: { navigation: any }) => {
         )}
       </ScrollView>
 
-      {/* Toolbar */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
@@ -147,22 +145,42 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    backgroundColor: "#fff",
+    padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderColor: "#eee",
   },
-  headerTitle: { fontSize: 18, fontWeight: "bold", color: "#000" },
+  headerTitle: { fontSize: 18, fontWeight: "bold" },
   postButton: {
     backgroundColor: "#0077B6",
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 6,
   },
-  postButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  divider: { height: 1, backgroundColor: "#eee" },
+  postButtonText: { color: "#fff", fontWeight: "bold" },
+  input: {
+    padding: 15,
+    fontSize: 18,
+    minHeight: 120,
+  },
+  imagePreviewContainer: {
+    margin: 15,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  previewImage: {
+    width: "100%",
+    height: 300,
+  },
+  removeImageBtn: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+  },
+  // toolbarContainer: {
+  //   padding: 12,
+  //   borderTopWidth: 1,
+  //   borderColor: "#eee",
+  // },
   userInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -183,27 +201,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   privacyText: { fontSize: 12, color: "#666", fontWeight: "500" },
-  input: {
-    paddingHorizontal: 15,
-    fontSize: 18,
-    color: "#333",
-    minHeight: 100,
-    textAlignVertical: "top",
-  },
-  imagePreviewContainer: {
-    margin: 15,
-    borderRadius: 10,
-    overflow: "hidden",
-    position: "relative",
-  },
-  previewImage: { width: "100%", height: 300, resizeMode: "cover" },
-  removeImageBtn: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    borderRadius: 20,
-  },
+
   toolbarContainer: {
     flexDirection: "row",
     alignItems: "center",

@@ -61,7 +61,13 @@ export const useFetchConversations = (
       setLoading(false);
       throw err;
     }
-  }, [chatState.isLoaded, chatState.conversations, dispatch, onError]);
+  }, [
+    dispatch,
+    onError,
+    loading,
+    chatState.isLoaded,
+    chatState.conversations.length,
+  ]);
 
   // ... (Phần logic Socket giữ nguyên) ...
   useEffect(() => {
@@ -80,7 +86,7 @@ export const useFetchConversations = (
     if (autoFetch && !chatState.isLoaded) {
       loadConversations();
     }
-  }, [autoFetch, chatState.isLoaded, loadConversations]);
+  }, [autoFetch, chatState.isLoaded]);
 
   // Listen to friend status changes (unfriend, accept friend request)
   // Refetch conversations khi có thay đổi friend status
