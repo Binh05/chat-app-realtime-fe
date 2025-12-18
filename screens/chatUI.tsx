@@ -160,7 +160,7 @@ export default function MessageDetailPage({
         ></Ionicons>
         <Image
           source={{
-            uri: otherUser?.avatarUrl || "https://i.pravatar.cc/150?img=47",
+            uri: "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
           }}
           style={styles.headerAvatar}
           resizeMode="cover"
@@ -168,10 +168,7 @@ export default function MessageDetailPage({
 
         <View>
           <Text style={styles.headerName}>{otherUser?.username || "User"}</Text>
-          <View style={styles.onlineRow}>
-            <View style={styles.onlineDot} />
-            <Text style={styles.onlineText}>Online</Text>
-          </View>
+          <View style={styles.onlineRow}></View>
         </View>
 
         <View style={styles.headerIcons}>
@@ -233,7 +230,9 @@ export default function MessageDetailPage({
               {/* On left message: show avatar */}
               {item.type === "received" && (
                 <Image
-                  source={{ uri: "https://i.pravatar.cc/150?img=47" }}
+                  source={{
+                    uri: "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
+                  }}
                   style={styles.smallAvatar}
                 />
               )}

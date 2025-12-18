@@ -64,9 +64,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) => {
           <View style={styles.avatarContainer}>
             <Image
               source={{
-                uri:
-                  user?.avatarUrl ??
-                  "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
+                uri: "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
               }}
               style={styles.avatar}
             />

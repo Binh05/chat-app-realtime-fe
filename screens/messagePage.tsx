@@ -74,11 +74,9 @@ export default function MessagePage({ navigation }: Props) {
   // Refetch friends và conversations mỗi khi vô trang này - chỉ refetch nếu chưa load
   useFocusEffect(
     React.useCallback(() => {
-      if (!isLoaded) {
-        refetchConversations();
-        refetchFriends();
-      }
-    }, [isLoaded, refetchFriends, refetchConversations])
+      refetchConversations();
+      refetchFriends();
+    }, [refetchFriends, refetchConversations])
   );
 
   // Get socket state for online indicator
@@ -93,7 +91,6 @@ export default function MessagePage({ navigation }: Props) {
       _id: friend._id,
       username: friend.username,
       avatarUrl:
-        friend.avatarUrl ||
         "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
     }));
   }, [onlineFriends]);

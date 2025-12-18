@@ -155,8 +155,9 @@ export default function DoctorListScreen({ navigation }: Props) {
 
     fetchData();
   }, []);
+  const [userlist, setUserlist] = useState<any[]>([]);
 
-  const userlist = React.useMemo(() => {
+  const userss = React.useMemo(() => {
     const notfriendlist = notFriends.map((nf: Friend) => ({
       ...nf,
       type: "notfriend",
@@ -167,9 +168,24 @@ export default function DoctorListScreen({ navigation }: Props) {
       requestId: s._id,
       type: "send",
     }));
-    const users = [...sendlist, ...notfriendlist];
-    return users;
+
+    return [...sendlist, ...notfriendlist];
   }, [notFriends, sends]);
+
+  React.useEffect(() => {
+    setUserlist(userss);
+  }, [userss]);
+
+  React.useEffect(() => {
+    if (!searchText.trim()) {
+      setUserlist(userss);
+      return;
+    }
+
+    const filtered = userss.filter((user) => user.phone?.includes(searchText));
+
+    setUserlist(filtered);
+  }, [searchText, userss]);
 
   const declineFriendRequest = async (friendRequestId: string) => {
     try {
@@ -341,7 +357,9 @@ export default function DoctorListScreen({ navigation }: Props) {
             renderItem={({ item }) => (
               <View style={styles.card}>
                 <Image
-                  source={{ uri: "https://i.pravatar.cc/150?img=12" }}
+                  source={{
+                    uri: "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
+                  }}
                   style={styles.avatar}
                 />
 

@@ -77,17 +77,21 @@ const PostItem = ({ item, userId }: { item: any; userId: string }) => {
   };
 
   return (
-    <View style={styles.postContainer}>
+    <View style={[styles.postContainer]}>
       {/* 1. Header */}
       <View style={styles.postHeader}>
         <Image
-          source={{ uri: item.user?.avatarURL || "https://i.pravatar.cc/100" }}
+          source={{
+            uri:
+              item.user?.avatarURL ||
+              "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
+          }}
           style={styles.avatar}
         />
 
         <View style={styles.userInfo}>
           <Text style={styles.userName}>
-            {item.user?.username || "unknow user"}
+            {item.createdBy?.username ?? "user"}
           </Text>
         </View>
 
@@ -176,7 +180,7 @@ export default function HomeScreen({ navigation }: any) {
   return (
     <View style={{ flex: 1 }}>
       {/* Phần nội dung HomeScreen */}
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container]}>
         <StatusBar barStyle="dark-content" />
 
         {/* HEADER TỔNG (Sticky) */}
@@ -200,7 +204,7 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* DANH SÁCH BÀI VIẾT */}
         {loading ? (
-          <View style={styles.centerContainer}>
+          <View style={[styles.centerContainer]}>
             <ActivityIndicator size="large" color="#007AFF" />
           </View>
         ) : error ? (
@@ -219,14 +223,9 @@ export default function HomeScreen({ navigation }: any) {
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => <PostItem item={item} userId={userId} />}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={{ paddingBottom: 0 }}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
-            ListFooterComponent={
-              loading && feeds.length > 0 ? (
-                <ActivityIndicator size="small" color="#007AFF" />
-              ) : null
-            }
           />
         ) : (
           <View style={styles.centerContainer}>

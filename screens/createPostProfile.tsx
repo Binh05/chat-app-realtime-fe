@@ -16,12 +16,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useCreateFeed } from "../hooks/useCreateFeed";
+import { useContextSelector } from "use-context-selector";
+import { UserContext } from "../contexts/UserContext";
 
 export const CreatePostProfile = ({ navigation }: { navigation: any }) => {
   const [postText, setPostText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const { createFeed, loading, error } = useCreateFeed();
+  const { state: user } = useContextSelector(UserContext, (v) => v);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -78,11 +81,13 @@ export const CreatePostProfile = ({ navigation }: { navigation: any }) => {
 
       <View style={styles.userInfoContainer}>
         <Image
-          source={{ uri: "https://i.pravatar.cc/150?img=5" }}
+          source={{
+            uri: "https://res.cloudinary.com/dyt536gfk/image/upload/v1765996624/avatar_e9pjjr.jpg",
+          }}
           style={styles.avatar}
         />
         <View style={styles.userInfoText}>
-          <Text style={styles.userName}>Nameh</Text>
+          <Text style={styles.userName}>{user?.username}</Text>
           <View style={styles.privacyBadge}>
             <Ionicons name="earth" size={12} color="#666" />
             <Text style={styles.privacyText}>Công khai</Text>

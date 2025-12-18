@@ -29,7 +29,11 @@ export const useCreateFeed = () => {
         } as any);
       }
 
-      const response = await api.post("/feeds", formData);
+      const response = await api.post("/feeds", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       const newFeed = response.data?.feed;
 
       if (newFeed) {

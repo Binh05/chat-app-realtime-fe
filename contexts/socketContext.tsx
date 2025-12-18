@@ -5,7 +5,7 @@ import { initialSocketState, socketReducer } from "../reducers/socketReducer";
 import { useContextSelector } from "use-context-selector";
 import { UserContext } from "./UserContext";
 
-const baseURL = "http://192.168.1.5:5000"; // Update with your backend URL
+const baseURL = "http://10.252.75.247:5000"; // Update with your backend URL
 
 export const SocketContext = createContext<any>(null);
 
@@ -29,11 +29,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       const newSocket = io(baseURL, {
         auth: { token },
-        transports: ["websocket"],
+        transports: ["websocket", "polling"],
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         reconnectionAttempts: 5,
+        path: "/socket.io",
       });
 
       // Connection events
